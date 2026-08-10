@@ -1,0 +1,30 @@
+{
+  "name": "smart-fishermen-safety-system",
+  "version": "1.0.0",
+  "description": "Smart Fishermen Safety & Rescue System using IoT, GPS, AI and Cloud Computing",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "apps/*"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm --prefix backend install && npm --prefix apps/fisherman-app install && npm --prefix apps/family-app install && npm --prefix apps/rescue-dashboard install && npm --prefix apps/government-admin install",
+    "seed": "node database/seed.js",
+    "start:backend": "node backend/src/server.js",
+    "start:simulator": "node iot/boat-device/telemetry_simulator.js",
+    "dev:fisherman": "npm --prefix apps/fisherman-app run dev",
+    "dev:family": "npm --prefix apps/family-app run dev",
+    "dev:rescue": "npm --prefix apps/rescue-dashboard run dev",
+    "dev:admin": "npm --prefix apps/government-admin run dev"
+  },
+  "keywords": [
+    "maritime-safety",
+    "iot",
+    "gps",
+    "ai-risk-prediction",
+    "fisherman-rescue",
+    "mob-beacon"
+  ],
+  "author": "Antigravity AI",
+  "license": "MIT"
+}
