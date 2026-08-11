@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { readData, writeData } = require('../config/database');
 
 exports.getAdminDashboard = (req, res) => {
@@ -51,6 +52,10 @@ exports.registerBoat = (req, res) => {
     lastUpdated: new Date().toISOString()
   };
 
+  const hashData = `${newBoat.id}-${newBoat.registrationNumber}-${Date.now()}`;
+  const txHash = '0x' + crypto.createHash('sha256').update(hashData).digest('hex');
+
+  newBoat.blockchainTxHash = txHash;
   db.boats.push(newBoat);
 
   db.governmentRecords.push({
@@ -59,7 +64,8 @@ exports.registerBoat = (req, res) => {
     subsidyStatus: 'APPROVED',
     subsidyAmountINR: 50000,
     safetyInspectionDate: new Date().toISOString().split('T')[0],
-    complianceScore: 100
+    complianceScore: 100,
+    blockchainTxHash: txHash
   });
 
   writeData(db);

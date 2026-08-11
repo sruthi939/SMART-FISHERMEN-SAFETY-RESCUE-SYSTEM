@@ -1,9 +1,20 @@
 const { readData, writeData } = require('../config/database');
 const { dispatchNearestRescueAsset } = require('../services/rescueService');
+const { calculateMOBDriftTrajectory } = require('../services/aiService');
 
 exports.getRescueUnits = (req, res) => {
   const db = readData();
   res.json({ rescueUnits: db.rescueUnits });
+};
+
+exports.getDriftTrajectory = (req, res) => {
+  const lat = parseFloat(req.query.lat) || 9.8540;
+  const lon = parseFloat(req.query.lon) || 76.1200;
+  const currentKnots = parseFloat(req.query.currentKnots) || 1.8;
+  const headingDeg = parseFloat(req.query.headingDeg) || 225;
+
+  const result = calculateMOBDriftTrajectory(lat, lon, currentKnots, headingDeg);
+  res.json(result);
 };
 
 exports.dispatchUnit = (req, res) => {

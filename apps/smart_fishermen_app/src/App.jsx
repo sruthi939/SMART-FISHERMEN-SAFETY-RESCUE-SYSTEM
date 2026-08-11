@@ -50,12 +50,12 @@ export default function SmartFishermenApp() {
   const [rescueUnits, setRescueUnits] = useState([]);
   const [adminSummary, setAdminSummary] = useState(null);
   const [imblWarning, setImblWarning] = useState(null);
+  const [driftData, setDriftData] = useState(null);
 
-  // SOS & Voice state
+  // SOS state
   const [sosHolding, setSosHolding] = useState(false);
   const [sosProgress, setSosProgress] = useState(0);
   const [sosActive, setSosActive] = useState(false);
-  const [activeLang, setActiveLang] = useState('EN');
 
   // Drone Modal State
   const [showDroneHUD, setShowDroneHUD] = useState(false);
@@ -97,6 +97,11 @@ export default function SmartFishermenApp() {
       .then(data => { if (data.rescueUnits) setRescueUnits(data.rescueUnits); })
       .catch(err => console.error(err));
 
+    fetch(`${BACKEND_URL}/api/rescue/drift-trajectory`)
+      .then(res => res.json())
+      .then(data => { if (data) setDriftData(data); })
+      .catch(err => console.error(err));
+
     fetch(`${BACKEND_URL}/api/admin/dashboard`)
       .then(res => res.json())
       .then(data => {
@@ -119,7 +124,6 @@ export default function SmartFishermenApp() {
         setAllBoats(prev => prev.map(b => b.id === data.boat.id ? { ...b, ...data.boat } : b));
         if (data.boat.id === 'b-102') setBoat(prev => prev ? { ...prev, ...data.boat } : data.boat);
       }
-      // Check IMBL boundary distance
       if (data.boat && data.boat.latitude) {
         const distToBorder = Math.abs(data.boat.latitude - 9.7500) * 60; // NM
         if (distToBorder < 8.0) {
@@ -250,15 +254,29 @@ export default function SmartFishermenApp() {
     });
   };
 
-  // AI MOB Drift Coordinates (+1h, +2h, +3h)
+  // Dynamic Family ETA calculation based on boat distance to Kochi Harbor
+  const homePortLat = 9.9600;
+  const homePortLon = 76.2400;
+  const boatLat = boat?.latitude || 9.9312;
+  const boatLon = boat?.longitude || 76.2673;
+  const distanceNM = parseFloat((Math.sqrt(Math.pow(boatLat - homePortLat, 2) + Math.pow(boatLon - homePortLon, 2)) * 60).toFixed(1));
+  const boatSpeed = boat?.speedKnots || 8.4;
+  const hoursToPort = boatSpeed > 0 ? parseFloat((distanceNM / boatSpeed).toFixed(1)) : 0;
+  const captain = crew.find(c => c.role === 'CAPTAIN') || crew[0] || { name: 'Ramesh Kumar', role: 'CAPTAIN' };
+
+  // Dynamic AI MOB Drift Points from Backend API
   const mobIncident = emergencies.find(e => e.emergencyType === 'MAN_OVERBOARD' && e.status !== 'RESCUED');
-  const mobLat = mobIncident ? mobIncident.latitude : 9.8540;
-  const mobLon = mobIncident ? mobIncident.longitude : 76.1200;
-  const driftPoints = [
-    [mobLat, mobLon],
-    [mobLat - 0.015, mobLon - 0.025], // +1h Drift
-    [mobLat - 0.030, mobLon - 0.050], // +2h Drift
-    [mobLat - 0.045, mobLon - 0.075]  // +3h Drift
+  const initialMobLat = mobIncident ? mobIncident.latitude : 9.8540;
+  const initialMobLon = mobIncident ? mobIncident.longitude : 76.1200;
+
+  const driftPoints = driftData?.trajectory ? [
+    [initialMobLat, initialMobLon],
+    ...driftData.trajectory.map(pt => [pt.latitude, pt.longitude])
+  ] : [
+    [initialMobLat, initialMobLon],
+    [initialMobLat - 0.015, initialMobLon - 0.025],
+    [initialMobLat - 0.030, initialMobLon - 0.050],
+    [initialMobLat - 0.045, initialMobLon - 0.075]
   ];
 
   return (
@@ -279,7 +297,7 @@ export default function SmartFishermenApp() {
           </div>
         </div>
 
-        {/* Role Portal Switcher */}
+        {/* Role Switcher */}
         <div className="flex items-center space-x-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs">
           <button onClick={() => setActiveRole('fisherman')} className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center space-x-1.5 ${activeRole === 'fisherman' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
             <Anchor className="w-3.5 h-3.5" />
@@ -403,7 +421,7 @@ export default function SmartFishermenApp() {
                   </div>
 
                   {/* Dynamic Navigation & IMBL Boundary Map */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[380px] relative overflow-hidden shadow-xl">
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[380px] relative overflow-hidden isolate shadow-xl">
                     <MapContainer center={[boat.latitude || 9.9312, boat.longitude || 76.2673]} zoom={11} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; OpenStreetMap & SFSRS' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                       
@@ -411,7 +429,6 @@ export default function SmartFishermenApp() {
                         <Popup><strong className="font-bold">{boat.name}</strong><br />Speed: {boat.speedKnots} kn</Popup>
                       </Marker>
 
-                      {/* International Maritime Boundary Line (IMBL 9.75° N) */}
                       <Polyline
                         positions={[[9.7500, 75.8000], [9.7500, 76.6000]]}
                         pathOptions={{ color: '#ef4444', weight: 3, dashArray: '6, 12' }}
@@ -420,7 +437,7 @@ export default function SmartFishermenApp() {
                       <Circle center={[9.9312, 76.2673]} radius={25000} pathOptions={{ color: '#0284c7', fillColor: '#0284c7', fillOpacity: 0.08, dashArray: '5, 10' }} />
                     </MapContainer>
 
-                    <div className="absolute top-4 right-4 bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl text-xs backdrop-blur-md z-[1000] space-y-1">
+                    <div className="absolute top-4 right-4 bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl text-xs backdrop-blur-md z-30 space-y-1">
                       <span className="text-red-400 font-bold flex items-center space-x-1">
                         <AlertTriangle className="w-3.5 h-3.5" />
                         <span>Red Line: IMBL Border (9.75° N)</span>
@@ -477,7 +494,7 @@ export default function SmartFishermenApp() {
                       <div key={c.id} className="p-3 bg-slate-950 rounded-xl flex items-center justify-between text-xs">
                         <div>
                           <p className="font-bold text-white">{c.name}</p>
-                          <p className="text-[10px] text-slate-400">Beacon: {c.wearableId || 'wb-001'}</p>
+                          <p className="text-[10px] text-slate-400">Role: {c.role} | Beacon: {c.wearableId || 'wb-001'}</p>
                         </div>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${c.status === 'OVERBOARD' ? 'bg-red-600 text-white' : 'bg-emerald-500/20 text-emerald-300'}`}>
                           {c.status}
@@ -495,21 +512,21 @@ export default function SmartFishermenApp() {
               <div className="space-y-6">
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center space-x-4">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt="Captain Ramesh" className="w-16 h-16 rounded-full border-2 border-emerald-400 object-cover" />
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt={captain.name} className="w-16 h-16 rounded-full border-2 border-emerald-400 object-cover" />
                     <div>
-                      <h3 className="text-lg font-extrabold text-white">Ramesh Kumar (Captain)</h3>
-                      <p className="text-xs text-slate-400">Vessel: {boat.name} ({boat.registrationNumber})</p>
-                      <p className="text-xs text-emerald-400 font-bold mt-1">Status: SAFE AT SEA • LoRa Mesh Syncing</p>
+                      <h3 className="text-lg font-extrabold text-white">{captain.name}</h3>
+                      <p className="text-xs text-slate-400">Vessel: {boat.name} ({boat.registrationNumber}) • {boat.homePort}</p>
+                      <p className="text-xs text-emerald-400 font-bold mt-1">Status: SAFE AT SEA • Telemetry Active</p>
                     </div>
                   </div>
 
                   <div className="text-right text-xs">
-                    <span className="text-slate-400 block text-[10px]">ESTIMATED RETURN (ETA)</span>
-                    <span className="text-base font-extrabold text-emerald-400">6:30 PM Today (4.2 hrs away)</span>
+                    <span className="text-slate-400 block text-[10px]">DYNAMIC CALCULATED RETURN ETA</span>
+                    <span className="text-base font-extrabold text-emerald-400">{hoursToPort} hrs to {boat.homePort} ({distanceNM} NM away)</span>
                   </div>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[420px] relative overflow-hidden shadow-xl">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[420px] relative overflow-hidden isolate shadow-xl">
                   <MapContainer center={[boat.latitude || 9.9312, boat.longitude || 76.2673]} zoom={11} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                     <TileLayer attribution='&copy; OpenStreetMap & SFSRS' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     <Marker position={[boat.latitude || 9.9312, boat.longitude || 76.2673]} icon={boatIcon}>
@@ -520,13 +537,13 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 3. COAST GUARD RESCUE VIEW WITH AI DRIFT TRAJECTORY & SAR DRONE */}
+            {/* 3. COAST GUARD RESCUE VIEW */}
             {activeRole === 'rescue' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Tactical Operations & AI Drift Trajectory Map */}
+                {/* Operations & AI Drift Trajectory Map */}
                 <div className="lg:col-span-2 space-y-4">
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[460px] relative overflow-hidden shadow-xl">
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[460px] relative overflow-hidden isolate shadow-xl">
                     <MapContainer center={[9.8800, 76.1500]} zoom={10} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; Coast Guard MROC' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                       
@@ -546,7 +563,7 @@ export default function SmartFishermenApp() {
 
                       {/* Autonomous SAR Drone */}
                       <Marker position={[9.8750, 76.1400]} icon={droneIcon}>
-                        <Popup><strong className="font-bold text-purple-400">CG-Drone-Alpha (Thermal IR SAR Drone)</strong><br />Altitude: 120m • Camera: Thermal FLIR</Popup>
+                        <Popup><strong className="font-bold text-purple-400">CG-Drone-Alpha (Thermal IR SAR Drone)</strong></Popup>
                       </Marker>
 
                       {/* Coast Guard Patrol Vessels */}
@@ -556,25 +573,25 @@ export default function SmartFishermenApp() {
                         </Marker>
                       ))}
 
-                      {/* AI MOB Drift Trajectory Vectors (+1h, +2h, +3h) */}
+                      {/* AI MOB Drift Trajectory Vectors */}
                       <Polyline
                         positions={driftPoints}
                         pathOptions={{ color: '#f59e0b', weight: 4, dashArray: '4, 8' }}
                       />
                       
-                      {/* Expanding AI Search Radius Circles */}
-                      <Circle center={driftPoints[1]} radius={500} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15 }} />
-                      <Circle center={driftPoints[2]} radius={900} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.10 }} />
-                      <Circle center={driftPoints[3]} radius={1300} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.08 }} />
+                      {/* Search Radius Circles */}
+                      {driftPoints[1] && <Circle center={driftPoints[1]} radius={500} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15 }} />}
+                      {driftPoints[2] && <Circle center={driftPoints[2]} radius={900} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.10 }} />}
+                      {driftPoints[3] && <Circle center={driftPoints[3]} radius={1300} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.08 }} />}
                     </MapContainer>
 
-                    {/* AI Drift Trajectory Overlay Box */}
-                    <div className="absolute top-4 right-4 bg-slate-900/90 border border-amber-500/40 p-3 rounded-xl backdrop-blur-md z-[1000] text-xs space-y-1 shadow-xl">
+                    {/* AI Drift Overlay */}
+                    <div className="absolute top-4 right-4 bg-slate-900/90 border border-amber-500/40 p-3 rounded-xl backdrop-blur-md z-30 text-xs space-y-1 shadow-xl">
                       <span className="font-bold text-amber-400 flex items-center space-x-1">
                         <Crosshair className="w-4 h-4" />
                         <span>AI MOB Drift Trajectory Radar</span>
                       </span>
-                      <p className="text-[11px] text-slate-300">Sea Current: <strong>1.8 knots @ 225° SW</strong></p>
+                      <p className="text-[11px] text-slate-300">Sea Current: <strong>{driftData?.driftSpeedKnots || 1.8} knots @ 225° SW</strong></p>
                       <p className="text-[11px] text-slate-300">+1h Projected: ({driftPoints[1][0].toFixed(4)}, {driftPoints[1][1].toFixed(4)})</p>
                       <p className="text-[11px] text-slate-300">+3h Projected: ({driftPoints[3][0].toFixed(4)}, {driftPoints[3][1].toFixed(4)})</p>
                     </div>
@@ -632,7 +649,7 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 4. GOVT ADMIN VIEW WITH BLOCKCHAIN AUDIT LEDGER */}
+            {/* 4. GOVT ADMIN VIEW */}
             {activeRole === 'admin' && (
               <div className="space-y-6">
                 
@@ -655,7 +672,6 @@ export default function SmartFishermenApp() {
                   </div>
                 </div>
 
-                {/* Vessel Registry with Blockchain Hashes */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                   <div className="p-5 border-b border-slate-800 flex justify-between items-center">
                     <h3 className="text-xs font-extrabold uppercase text-white tracking-wider flex items-center space-x-2">
@@ -693,7 +709,7 @@ export default function SmartFishermenApp() {
                             <td className="p-4">
                               <span className="font-mono text-[10px] bg-slate-950 px-2 py-1 rounded border border-purple-500/30 text-purple-300 flex items-center space-x-1">
                                 <ShieldCheck className="w-3 h-3 text-purple-400 flex-shrink-0" />
-                                <span>0x8f23a9b1c74d8120e3a...</span>
+                                <span>{b.blockchainTxHash ? `${b.blockchainTxHash.slice(0, 18)}...` : '0x8f23a9b1c74d8120e3...'}</span>
                               </span>
                             </td>
                           </tr>
@@ -712,7 +728,7 @@ export default function SmartFishermenApp() {
 
       {/* Autonomous Thermal IR SAR Drone Camera HUD Modal */}
       {showDroneHUD && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
           <div className="bg-slate-900 border border-purple-500/40 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl space-y-4">
             <div className="bg-purple-950/80 p-4 border-b border-purple-500/30 flex justify-between items-center">
               <div className="flex items-center space-x-2">
@@ -723,7 +739,6 @@ export default function SmartFishermenApp() {
             </div>
 
             <div className="p-4 space-y-4">
-              {/* Thermal View Container */}
               <div className="relative h-64 bg-slate-950 rounded-2xl overflow-hidden border border-purple-500/40 flex items-center justify-center">
                 <img src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=800" alt="Drone FLIR View" className="w-full h-full object-cover filter contrast-200 hue-rotate-180 brightness-75" />
                 <div className="absolute inset-0 border-2 border-purple-500/30 pointer-events-none flex items-center justify-center">
@@ -758,7 +773,7 @@ export default function SmartFishermenApp() {
 
       {/* Registration Modal */}
       {showRegModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
             <h3 className="text-base font-extrabold text-white">Register New Fishing Vessel</h3>
             <form onSubmit={handleRegisterBoat} className="space-y-3 text-xs">

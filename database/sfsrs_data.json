@@ -59,16 +59,16 @@
       "licenseStatus": "ACTIVE",
       "insurancePolicy": "UIIC-MAR-99812",
       "insuranceExpiry": "2027-12-31",
-      "status": "AT_SEA",
-      "latitude": 9.820382363520531,
-      "longitude": 76.04902312727339,
-      "speedKnots": 6.5,
-      "headingDeg": 230,
+      "status": "EMERGENCY",
+      "latitude": 9.93197407846615,
+      "longitude": 76.26744029913327,
+      "speedKnots": 0,
+      "headingDeg": 240,
       "fuelPct": 10,
-      "batteryV": 13.3,
+      "batteryV": 13.4,
       "waterLeak": false,
-      "tiltAngle": 3.3,
-      "lastUpdated": "2026-08-11T06:09:38.820Z"
+      "tiltAngle": 2.6,
+      "lastUpdated": "2026-08-11T06:14:55.407Z"
     },
     {
       "id": "b-105",
@@ -179,6 +179,22 @@
   ],
   "emergencies": [
     {
+      "id": "em-1786428781152",
+      "incidentNumber": "INC-781152",
+      "boatId": "b-102",
+      "boatName": "Sea Falcon",
+      "registrationNumber": "KL-07-FISH-102",
+      "fishermanId": "u-fish-01",
+      "emergencyType": "BOAT_SOS",
+      "latitude": 9.925994715949274,
+      "longitude": 76.23935150389956,
+      "severity": "CRITICAL",
+      "status": "DISPATCHED",
+      "description": "Voice-Activated SOS distress trigger in മലയാളം (Malayalam) aboard Sea Falcon (KL-07-FISH-102).",
+      "createdAt": "2026-08-11T06:13:01.152Z",
+      "assignedRescueUnit": "CG-Copter-03 (Sea King)"
+    },
+    {
       "id": "em-1001",
       "incidentNumber": "INC-2026-0811-01",
       "boatId": "b-105",
@@ -211,8 +227,8 @@
       "baseStation": "INS Garuda Naval Air Station",
       "latitude": 9.95,
       "longitude": 76.27,
-      "status": "STANDBY",
-      "currentEmergencyId": null
+      "status": "DISPATCHED",
+      "currentEmergencyId": "em-1786428781152"
     }
   ],
   "weatherForecasts": [
