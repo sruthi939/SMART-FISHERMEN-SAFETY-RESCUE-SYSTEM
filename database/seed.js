@@ -373,6 +373,37 @@ const initialData = {
       lat: 12.5000,
       lon: 74.9800
     }
+  ],
+  familyMessages: [
+    {
+      id: 'msg-01',
+      boatId: 'b-102',
+      senderName: 'Lakshmi (Wife)',
+      senderRole: 'FAMILY',
+      messageText: 'Ramesh, wind is picking up near shore. Take care and return safely!',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      bearerUsed: 'LORA_MESH_RELAY'
+    },
+    {
+      id: 'msg-02',
+      boatId: 'b-102',
+      senderName: 'Ramesh Kumar (Captain)',
+      senderRole: 'FISHERMAN',
+      messageText: 'All good on Sea Falcon! Catching Kingfish 14 NM offshore. Returning by 6:30 PM.',
+      timestamp: new Date(Date.now() - 1800000).toISOString(),
+      bearerUsed: 'LORA_MESH_RELAY'
+    }
+  ],
+  fishMarketPrices: [
+    { id: 'm-01', fishName: 'Kingfish / Seer (Neymeen)', priceINRPerKg: 780, trend: 'UP', harbor: 'Munambam Harbor' },
+    { id: 'm-02', fishName: 'Sardine (Mathi)', priceINRPerKg: 140, trend: 'STABLE', harbor: 'Fort Kochi Harbor' },
+    { id: 'm-03', fishName: 'Mackerel (Ayala)', priceINRPerKg: 220, trend: 'UP', harbor: 'Neendakara Harbor' },
+    { id: 'm-04', fishName: 'Yellowfin Tuna (Kera)', priceINRPerKg: 340, trend: 'UP', harbor: 'Vizhinjam Harbor' },
+    { id: 'm-05', fishName: 'Tiger Prawns (Chemmeen)', priceINRPerKg: 650, trend: 'STABLE', harbor: 'Beypore Harbor' }
+  ],
+  teleMedicineHotlines: [
+    { id: 'med-01', title: 'Naval Medical Corps Emergency Doctor', contactPhone: '+91 484 2872100', available: '24x7 Active' },
+    { id: 'med-02', title: 'Kerala Maritime Board First Aid Hotline', contactPhone: '108 / 1554', available: '24x7 Active' }
   ]
 };
 
