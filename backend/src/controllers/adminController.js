@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { readData, writeData } = require('../config/database');
 
 exports.getAdminDashboard = (req, res) => {
@@ -14,12 +15,45 @@ exports.getAdminDashboard = (req, res) => {
       activeAtSea,
       activeEmergencies,
       totalFishermen,
-      totalSubsidiesDisbursedINR: totalSubsidiesDisbursed
+      totalSubsidiesDisbursedINR: totalSubsidiesDisbursed,
+      totalCoastalDistricts: (db.keralaCoastalDistricts || []).length
     },
     boats: db.boats,
     crew: db.crew,
     emergencies: db.emergencies,
-    governmentRecords: db.governmentRecords
+    governmentRecords: db.governmentRecords,
+    keralaCoastalDistricts: db.keralaCoastalDistricts || []
+  });
+};
+
+exports.getCoastalDistricts = (req, res) => {
+  const db = readData();
+  res.json({ coastalDistricts: db.keralaCoastalDistricts || [] });
+};
+
+exports.getPendingUsers = (req, res) => {
+  const db = readData();
+  const pendingUsers = db.users.filter(u => u.status === 'PENDING_ADMIN_APPROVAL');
+  res.json({ pendingUsers });
+};
+
+exports.verifyUser = (req, res) => {
+  const { userId } = req.params;
+  const { status } = req.body; // 'APPROVED' or 'REJECTED'
+  const db = readData();
+
+  const userIndex = db.users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ error: 'User registration request not found' });
+  }
+
+  db.users[userIndex].status = status || 'APPROVED';
+  db.users[userIndex].verifiedAt = new Date().toISOString();
+  writeData(db);
+
+  res.json({
+    message: `User access ${status || 'APPROVED'} successfully by Government Admin.`,
+    user: db.users[userIndex]
   });
 };
 
@@ -51,6 +85,10 @@ exports.registerBoat = (req, res) => {
     lastUpdated: new Date().toISOString()
   };
 
+  const hashData = `${newBoat.id}-${newBoat.registrationNumber}-${Date.now()}`;
+  const txHash = '0x' + crypto.createHash('sha256').update(hashData).digest('hex');
+
+  newBoat.blockchainTxHash = txHash;
   db.boats.push(newBoat);
 
   db.governmentRecords.push({
@@ -59,7 +97,8 @@ exports.registerBoat = (req, res) => {
     subsidyStatus: 'APPROVED',
     subsidyAmountINR: 50000,
     safetyInspectionDate: new Date().toISOString().split('T')[0],
-    complianceScore: 100
+    complianceScore: 100,
+    blockchainTxHash: txHash
   });
 
   writeData(db);

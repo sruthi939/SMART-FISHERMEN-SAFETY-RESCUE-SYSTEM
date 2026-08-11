@@ -12,6 +12,8 @@ const { cleanUnwantedAppFolders } = require('../../database/cleanup');
 const emergencyController = require('./controllers/emergencyController');
 const trackingController = require('./controllers/trackingController');
 
+const familyController = require('./controllers/familyController');
+
 // Clean unwanted legacy app folders & initialize database
 cleanUnwantedAppFolders();
 initDatabase();
@@ -26,9 +28,10 @@ const io = new Server(server, {
   }
 });
 
-// Attach socket IO instance to emergency & tracking controllers
+// Attach socket IO instance to controllers
 emergencyController.setSocketIO(io);
 trackingController.setSocketIO(io);
+familyController.setSocketIO(io);
 
 // Middleware
 app.use(cors());
@@ -42,6 +45,7 @@ app.use('/api/tracking', require('./routes/trackingRoutes'));
 app.use('/api/rescue', require('./routes/rescueRoutes'));
 app.use('/api/weather', require('./routes/weatherRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/family', require('./routes/familyRoutes'));
 
 // Root Status Endpoint
 app.get('/api/status', (req, res) => {

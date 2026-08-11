@@ -4,6 +4,7 @@
   "description": "SFSRS Node.js Express & Socket.IO Backend API Server",
   "main": "src/server.js",
   "scripts": {
+    "prestart": "npm install",
     "start": "node src/server.js",
     "dev": "node src/server.js"
   },
