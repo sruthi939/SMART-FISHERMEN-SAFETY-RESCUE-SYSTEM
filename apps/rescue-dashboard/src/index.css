@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.radar-sweep-line {
+  animation: radar-sweep 4s linear infinite;
+  transform-origin: center;
+}
+
+.leaflet-container {
+  background-color: #030712 !important;
+  font-family: inherit;
+}
+.leaflet-tile {
+  filter: brightness(0.5) invert(1) contrast(3) hue-rotate(210deg) saturate(0.4) brightness(0.6);
+}

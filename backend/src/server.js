@@ -8,10 +8,12 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const { initDatabase } = require('./config/database');
+const { cleanUnwantedAppFolders } = require('../../database/cleanup');
 const emergencyController = require('./controllers/emergencyController');
 const trackingController = require('./controllers/trackingController');
 
-// Initialize database
+// Clean unwanted legacy app folders & initialize database
+cleanUnwantedAppFolders();
 initDatabase();
 
 const app = express();
