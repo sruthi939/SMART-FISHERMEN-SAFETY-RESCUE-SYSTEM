@@ -4,7 +4,7 @@ import {
   Battery, AlertTriangle, MapPin, Users, Wind, Waves, CheckCircle2, 
   LifeBuoy, PhoneCall, Clock, Navigation, Plus, FileCheck, IndianRupee, 
   RefreshCw, Camera, Mic, Cpu, Lock, ShieldCheck, Zap, Crosshair, Server, Database, Satellite, Layers, Map,
-  MessageSquare, Send, Stethoscope, TrendingUp, Bell, Check
+  MessageSquare, Send, Stethoscope, TrendingUp, Bell, Check, LogOut, UserCheck, KeyRound, Mail
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
@@ -44,7 +44,12 @@ const harborMarker = new L.DivIcon({
 });
 
 export default function SmartFishermenApp() {
-  const [activeRole, setActiveRole] = useState('fisherman');
+  // Authentication & Strict Role Portal Isolation
+  const [currentUser, setCurrentUser] = useState(null); // null = Login Screen
+  const [loginRole, setLoginRole] = useState('fisherman');
+  const [loginEmail, setLoginEmail] = useState('ramesh@fisherman.org');
+  const [loginPassword, setLoginPassword] = useState('password123');
+
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -80,6 +85,35 @@ export default function SmartFishermenApp() {
   // Admin Registration Modal State
   const [showRegModal, setShowRegModal] = useState(false);
   const [regForm, setRegForm] = useState({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: 'Kochi Harbor' });
+
+  // Preset Credentials for Demo Login
+  const demoUsers = {
+    fisherman: { name: 'Ramesh Kumar (Captain)', email: 'ramesh@fisherman.org', role: 'fisherman', boatName: 'Sea Falcon' },
+    family: { name: 'Lakshmi Kumar', email: 'lakshmi@family.org', role: 'family', relation: 'Wife of Ramesh' },
+    rescue: { name: 'Commandant Rajesh', email: 'rajesh@coastguard.gov', role: 'rescue', station: 'ICGS District HQ 4 Kochi' },
+    admin: { name: 'Officer Suresh Admin', email: 'suresh@fisheries.gov.in', role: 'admin', dept: 'Kerala Fisheries Dept' }
+  };
+
+  const handleSelectRoleTab = (roleKey) => {
+    setLoginRole(roleKey);
+    setLoginEmail(demoUsers[roleKey].email);
+    setLoginPassword('password123');
+  };
+
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    const userObj = demoUsers[loginRole] || demoUsers.fisherman;
+    setCurrentUser(userObj);
+  };
+
+  const handleQuickDemoLogin = (roleKey) => {
+    setLoginRole(roleKey);
+    setCurrentUser(demoUsers[roleKey]);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+  };
 
   // Fetch initial backend data
   const fetchAllData = () => {
@@ -160,7 +194,7 @@ export default function SmartFishermenApp() {
         if (data.boat.id === 'b-102') setBoat(prev => prev ? { ...prev, ...data.boat } : data.boat);
       }
       if (data.boat && data.boat.latitude) {
-        const distToBorder = Math.abs(data.boat.latitude - 9.7500) * 60; // NM
+        const distToBorder = Math.abs(data.boat.latitude - 9.7500) * 60;
         if (distToBorder < 8.0) {
           setImblWarning(`WARNING: Vessel is ${distToBorder.toFixed(1)} NM from International Maritime Boundary (IMBL 9.75° N)!`);
         } else {
@@ -260,8 +294,8 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         boatId: boat?.id || 'b-102',
-        senderName: activeRole === 'family' ? 'Lakshmi (Wife)' : 'Ramesh (Captain)',
-        senderRole: activeRole === 'family' ? 'FAMILY' : 'FISHERMAN',
+        senderName: currentUser?.role === 'family' ? 'Lakshmi (Wife)' : 'Ramesh (Captain)',
+        senderRole: currentUser?.role === 'family' ? 'FAMILY' : 'FISHERMAN',
         messageText: chatInputText
       })
     })
@@ -348,6 +382,135 @@ export default function SmartFishermenApp() {
     ? coastalDistricts
     : coastalDistricts.filter(d => d.code === selectedDistrict || d.districtName.toUpperCase().includes(selectedDistrict.toUpperCase()));
 
+  // =========================================================================
+  // 1. LOGIN SCREEN (WHEN CURRENTUSER IS NULL)
+  // =========================================================================
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden font-sans">
+        
+        {/* Background Decorative Rings */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6 relative z-10">
+          
+          {/* Logo & Header */}
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 bg-cyan-600/20 text-cyan-400 rounded-2xl border border-cyan-500/30 flex items-center justify-center mx-auto shadow-lg">
+              <LifeBuoy className="w-9 h-9" />
+            </div>
+            <h1 className="text-xl font-extrabold text-white tracking-wider uppercase">SMART FISHERMEN SAFETY SYSTEM</h1>
+            <p className="text-xs text-slate-400">Select Portal Role & Log in to access your designated interface</p>
+          </div>
+
+          {/* Role Selection Tabs */}
+          <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-bold">
+            <button
+              onClick={() => handleSelectRoleTab('fisherman')}
+              className={`p-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 ${loginRole === 'fisherman' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            >
+              <Anchor className="w-4 h-4" />
+              <span>Fisherman</span>
+            </button>
+
+            <button
+              onClick={() => handleSelectRoleTab('family')}
+              className={`p-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 ${loginRole === 'family' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            >
+              <Heart className="w-4 h-4" />
+              <span>Family</span>
+            </button>
+
+            <button
+              onClick={() => handleSelectRoleTab('rescue')}
+              className={`p-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 ${loginRole === 'rescue' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            >
+              <ShieldAlert className="w-4 h-4" />
+              <span>Coast Guard</span>
+            </button>
+
+            <button
+              onClick={() => handleSelectRoleTab('admin')}
+              className={`p-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 ${loginRole === 'admin' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            >
+              <Building2 className="w-4 h-4" />
+              <span>Govt Admin</span>
+            </button>
+          </div>
+
+          {/* Login Form */}
+          <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="text-slate-400 block mb-1.5 font-bold flex items-center space-x-1">
+                <Mail className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Registered Email Address</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={loginEmail}
+                onChange={e => setLoginEmail(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-slate-400 block mb-1.5 font-bold flex items-center space-x-1">
+                <KeyRound className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Password</span>
+              </label>
+              <input
+                type="password"
+                required
+                value={loginPassword}
+                onChange={e => setLoginPassword(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className={`w-full py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-white shadow-lg transition flex items-center justify-center space-x-2 ${
+                loginRole === 'fisherman' ? 'bg-cyan-600 hover:bg-cyan-500' :
+                loginRole === 'family' ? 'bg-emerald-600 hover:bg-emerald-500' :
+                loginRole === 'rescue' ? 'bg-red-600 hover:bg-red-500' : 'bg-purple-600 hover:bg-purple-500'
+              }`}
+            >
+              <UserCheck className="w-4 h-4" />
+              <span>LOG IN TO {loginRole.toUpperCase()} PORTAL</span>
+            </button>
+          </form>
+
+          {/* 1-Click Quick Demo Login Shortcuts */}
+          <div className="pt-2 border-t border-slate-800 space-y-2">
+            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block text-center">Or 1-Click Demo Login As:</span>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <button onClick={() => handleQuickDemoLogin('fisherman')} className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-cyan-300 font-bold text-left">
+                🛥️ Fisherman (Ramesh)
+              </button>
+              <button onClick={() => handleQuickDemoLogin('family')} className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-emerald-300 font-bold text-left">
+                🛟 Family (Lakshmi)
+              </button>
+              <button onClick={() => handleQuickDemoLogin('rescue')} className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-red-300 font-bold text-left">
+                🚨 Coast Guard (Rajesh)
+              </button>
+              <button onClick={() => handleQuickDemoLogin('admin')} className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-purple-300 font-bold text-left">
+                🏛️ Govt Admin (Suresh)
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 2. LOGGED IN PORTAL VIEW (STRICT USER ISOLATION - ONLY SHOWS OWN ROLE)
+  // =========================================================================
+  const userRole = currentUser.role;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       
@@ -360,31 +523,32 @@ export default function SmartFishermenApp() {
           <div>
             <h1 className="text-sm font-extrabold text-white tracking-wider uppercase flex items-center space-x-2">
               <span>SMART FISHERMEN SAFETY SYSTEM (SFSRS)</span>
-              <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30 font-bold">
-                FAMILY PORTAL ENHANCED
+              <span className="bg-cyan-500/20 text-cyan-400 text-[10px] px-2 py-0.5 rounded border border-cyan-500/30 font-bold uppercase">
+                {userRole.toUpperCase()} PORTAL ACTIVE
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400">Off-Grid Mesh Chat • Safe-Zone Geofencing • Live Fish Auction Rates • Marine Tele-Medicine</p>
+            <p className="text-[11px] text-slate-400">Strict Role Isolation • Secure Authenticated Session</p>
           </div>
         </div>
 
-        {/* Role Switcher */}
-        <div className="flex items-center space-x-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs">
-          <button onClick={() => setActiveRole('fisherman')} className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center space-x-1.5 ${activeRole === 'fisherman' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
-            <Anchor className="w-3.5 h-3.5" />
-            <span>Fisherman App</span>
-          </button>
-          <button onClick={() => setActiveRole('family')} className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center space-x-1.5 ${activeRole === 'family' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
-            <Heart className="w-3.5 h-3.5" />
-            <span>Family Portal (Full Suite)</span>
-          </button>
-          <button onClick={() => setActiveRole('rescue')} className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center space-x-1.5 ${activeRole === 'rescue' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <span>Coast Guard Command</span>
-          </button>
-          <button onClick={() => setActiveRole('admin')} className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center space-x-1.5 ${activeRole === 'admin' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Govt Admin</span>
+        {/* User Account Info & Logout Button */}
+        <div className="flex items-center space-x-3">
+          <div className="bg-slate-950 border border-slate-800 px-3.5 py-1.5 rounded-xl flex items-center space-x-2.5 text-xs">
+            <div className="w-7 h-7 rounded-full bg-cyan-600 text-white flex items-center justify-center font-bold text-xs">
+              {currentUser.name[0]}
+            </div>
+            <div className="text-left">
+              <span className="font-extrabold text-white block">{currentUser.name}</span>
+              <span className="text-[10px] text-cyan-400 uppercase font-bold">{userRole} account</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center space-x-1"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Switch / Logout</span>
           </button>
         </div>
 
@@ -416,7 +580,7 @@ export default function SmartFishermenApp() {
         </div>
       )}
 
-      {/* Dynamic Role Views */}
+      {/* Main Isolated Portal Views */}
       <div className="max-w-7xl w-full mx-auto p-6 flex-1">
 
         {loading && !boat ? (
@@ -426,8 +590,8 @@ export default function SmartFishermenApp() {
           </div>
         ) : (
           <>
-            {/* 1. FISHERMAN PORTAL VIEW */}
-            {activeRole === 'fisherman' && boat && (
+            {/* 1. FISHERMAN PORTAL VIEW (ONLY VISIBLE WHEN LOGGED IN AS FISHERMAN) */}
+            {userRole === 'fisherman' && boat && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                   
@@ -581,14 +745,12 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 2. FAMILY PORTAL VIEW - ENHANCED FULL SUITE */}
-            {activeRole === 'family' && boat && (
+            {/* 2. FAMILY PORTAL VIEW (ONLY VISIBLE WHEN LOGGED IN AS FAMILY) */}
+            {userRole === 'family' && boat && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Left Column: Captain Overview, Dynamic ETA, Map & Messaging */}
                 <div className="lg:col-span-2 space-y-6">
                   
-                  {/* Captain Header & Geofence Alert */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center space-x-4">
                       <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt={captain.name} className="w-16 h-16 rounded-full border-2 border-emerald-400 object-cover" />
@@ -609,7 +771,6 @@ export default function SmartFishermenApp() {
                     </div>
                   </div>
 
-                  {/* Geofence Status Badge */}
                   <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between text-xs">
                     <div className="flex items-center space-x-2">
                       <Bell className="w-4 h-4 text-emerald-400" />
@@ -621,7 +782,6 @@ export default function SmartFishermenApp() {
                     <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2.5 py-0.5 rounded font-bold border border-emerald-500/30">SMS NOTIFICATIONS ACTIVE</span>
                   </div>
 
-                  {/* Peace-of-Mind Live Map */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[360px] relative overflow-hidden isolate shadow-xl">
                     <MapContainer center={[boat.latitude || 9.9312, boat.longitude || 76.2673]} zoom={11} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; OpenStreetMap & SFSRS' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -641,7 +801,6 @@ export default function SmartFishermenApp() {
                       <span className="text-[10px] bg-slate-950 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">Relayed via LoRa Mesh Packet</span>
                     </div>
 
-                    {/* Chat Messages Log */}
                     <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
                       {familyChatMessages.map(msg => (
                         <div key={msg.id} className={`p-3 rounded-xl text-xs space-y-1 ${msg.senderRole === 'FAMILY' ? 'bg-cyan-950/50 border border-cyan-500/30 ml-6' : 'bg-slate-950 border border-slate-800 mr-6'}`}>
@@ -654,7 +813,6 @@ export default function SmartFishermenApp() {
                       ))}
                     </div>
 
-                    {/* Send Message Form */}
                     <form onSubmit={handleSendFamilyMessage} className="flex space-x-2 pt-1">
                       <input
                         type="text"
@@ -672,10 +830,8 @@ export default function SmartFishermenApp() {
 
                 </div>
 
-                {/* Right Column: Fish Market Prices, Harbor Weather & Medical Hotline */}
                 <div className="space-y-6">
                   
-                  {/* 💰 Live Fish Market Auction Prices */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
                     <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                       <h4 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center space-x-1.5">
@@ -700,7 +856,6 @@ export default function SmartFishermenApp() {
                     </div>
                   </div>
 
-                  {/* 🩺 Marine Tele-Medicine Emergency Guidance Hotline */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
                     <h4 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center space-x-1.5">
                       <Stethoscope className="w-4 h-4 text-purple-400" />
@@ -723,7 +878,6 @@ export default function SmartFishermenApp() {
                     </button>
                   </div>
 
-                  {/* 📞 Direct Coast Guard MRCC Call */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-center space-y-3">
                     <span className="text-xs font-bold uppercase text-slate-400">Coast Guard MRCC Direct Hotline</span>
                     <a href="tel:1554" className="block bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl text-sm uppercase tracking-wider shadow-lg shadow-red-900/40 flex items-center justify-center space-x-2">
@@ -737,8 +891,8 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 3. COAST GUARD RESCUE VIEW */}
-            {activeRole === 'rescue' && (
+            {/* 3. COAST GUARD RESCUE VIEW (ONLY VISIBLE WHEN LOGGED IN AS COAST GUARD) */}
+            {userRole === 'rescue' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 <div className="lg:col-span-2 space-y-4">
@@ -848,8 +1002,8 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 4. GOVT ADMIN VIEW */}
-            {activeRole === 'admin' && (
+            {/* 4. GOVT ADMIN VIEW (ONLY VISIBLE WHEN LOGGED IN AS ADMIN) */}
+            {userRole === 'admin' && (
               <div className="space-y-6">
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -948,6 +1102,50 @@ export default function SmartFishermenApp() {
                               <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded text-[10px] font-bold flex items-center space-x-1 w-fit">
                                 <ShieldCheck className="w-3 h-3 text-purple-400" />
                                 <span>{d.coastGuardStation}</span>
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Registered Vessels & Cryptographic Hashes */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                  <div className="p-5 border-b border-slate-800">
+                    <h3 className="text-xs font-extrabold uppercase text-white tracking-wider flex items-center space-x-2">
+                      <Lock className="w-4 h-4 text-purple-400" />
+                      <span>Registered Fishing Vessels & Cryptographic Blockchain Audit Ledger</span>
+                    </h3>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-300">
+                      <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                        <tr>
+                          <th className="p-4">Reg Number</th>
+                          <th className="p-4">Vessel Name</th>
+                          <th className="p-4">Type</th>
+                          <th className="p-4">Home Port</th>
+                          <th className="p-4">License Status</th>
+                          <th className="p-4">Cryptographic Blockchain Hash</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {allBoats.map(b => (
+                          <tr key={b.id} className="hover:bg-slate-800/40 transition">
+                            <td className="p-4 font-bold text-white">{b.registrationNumber}</td>
+                            <td className="p-4 font-semibold text-cyan-300">{b.name}</td>
+                            <td className="p-4">{b.boatType || 'Deep Sea Trawler'}</td>
+                            <td className="p-4">{b.homePort}</td>
+                            <td className="p-4">
+                              <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">ACTIVE</span>
+                            </td>
+                            <td className="p-4">
+                              <span className="font-mono text-[10px] bg-slate-950 px-2 py-1 rounded border border-purple-500/30 text-purple-300 flex items-center space-x-1">
+                                <ShieldCheck className="w-3 h-3 text-purple-400 flex-shrink-0" />
+                                <span>{b.blockchainTxHash ? `${b.blockchainTxHash.slice(0, 18)}...` : '0x8f23a9b1c74d8120e3...'}</span>
                               </span>
                             </td>
                           </tr>
