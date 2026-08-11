@@ -44,11 +44,14 @@ const harborMarker = new L.DivIcon({
 });
 
 export default function SmartFishermenApp() {
-  // Authentication & Strict Role Portal Isolation
+  // Real API Authentication & Portal Isolation State
   const [currentUser, setCurrentUser] = useState(null); // null = Login Screen
+  const [dbUsers, setDbUsers] = useState([]);
   const [loginRole, setLoginRole] = useState('fisherman');
   const [loginEmail, setLoginEmail] = useState('ramesh@fisherman.org');
   const [loginPassword, setLoginPassword] = useState('password123');
+  const [authError, setAuthError] = useState(null);
+  const [authenticating, setAuthenticating] = useState(false);
 
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -86,32 +89,80 @@ export default function SmartFishermenApp() {
   const [showRegModal, setShowRegModal] = useState(false);
   const [regForm, setRegForm] = useState({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: 'Kochi Harbor' });
 
-  // Preset Credentials for Demo Login
-  const demoUsers = {
-    fisherman: { name: 'Ramesh Kumar (Captain)', email: 'ramesh@fisherman.org', role: 'fisherman', boatName: 'Sea Falcon' },
-    family: { name: 'Lakshmi Kumar', email: 'lakshmi@family.org', role: 'family', relation: 'Wife of Ramesh' },
-    rescue: { name: 'Commandant Rajesh', email: 'rajesh@coastguard.gov', role: 'rescue', station: 'ICGS District HQ 4 Kochi' },
-    admin: { name: 'Officer Suresh Admin', email: 'suresh@fisheries.gov.in', role: 'admin', dept: 'Kerala Fisheries Dept' }
-  };
+  // Fetch registered DB users from backend API
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/api/auth/users`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.users) setDbUsers(data.users);
+      })
+      .catch(err => console.error(err));
+  }, []);
 
   const handleSelectRoleTab = (roleKey) => {
     setLoginRole(roleKey);
-    setLoginEmail(demoUsers[roleKey].email);
-    setLoginPassword('password123');
+    setAuthError(null);
+    const foundUser = dbUsers.find(u => u.role === roleKey);
+    if (foundUser) {
+      setLoginEmail(foundUser.email);
+    }
   };
 
+  // Authentic API Authentication Handler (POST /api/auth/login)
   const handleLoginSubmit = (e) => {
     e.preventDefault();
-    const userObj = demoUsers[loginRole] || demoUsers.fisherman;
-    setCurrentUser(userObj);
+    setAuthenticating(true);
+    setAuthError(null);
+
+    fetch(`${BACKEND_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: loginEmail, password: loginPassword, role: loginRole })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Authentication failed. Invalid credentials.');
+      return res.json();
+    })
+    .then(data => {
+      if (data.user) {
+        if (data.token) localStorage.setItem('sfsrs_token', data.token);
+        setCurrentUser(data.user);
+      }
+      setAuthenticating(false);
+    })
+    .catch(err => {
+      setAuthError(err.message || 'Login failed');
+      setAuthenticating(false);
+    });
   };
 
-  const handleQuickDemoLogin = (roleKey) => {
-    setLoginRole(roleKey);
-    setCurrentUser(demoUsers[roleKey]);
+  const handleQuickApiLogin = (targetEmail, targetRole) => {
+    setLoginRole(targetRole);
+    setLoginEmail(targetEmail);
+    setAuthenticating(true);
+    setAuthError(null);
+
+    fetch(`${BACKEND_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: targetEmail, password: 'password123', role: targetRole })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.user) {
+        if (data.token) localStorage.setItem('sfsrs_token', data.token);
+        setCurrentUser(data.user);
+      }
+      setAuthenticating(false);
+    })
+    .catch(err => {
+      setAuthError('Authentication error');
+      setAuthenticating(false);
+    });
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('sfsrs_token');
     setCurrentUser(null);
   };
 
@@ -294,7 +345,7 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         boatId: boat?.id || 'b-102',
-        senderName: currentUser?.role === 'family' ? 'Lakshmi (Wife)' : 'Ramesh (Captain)',
+        senderName: currentUser?.name || 'Family Member',
         senderRole: currentUser?.role === 'family' ? 'FAMILY' : 'FISHERMAN',
         messageText: chatInputText
       })
@@ -383,7 +434,7 @@ export default function SmartFishermenApp() {
     : coastalDistricts.filter(d => d.code === selectedDistrict || d.districtName.toUpperCase().includes(selectedDistrict.toUpperCase()));
 
   // =========================================================================
-  // 1. LOGIN SCREEN (WHEN CURRENTUSER IS NULL)
+  // 1. AUTHENTIC API LOGIN SCREEN (WHEN CURRENTUSER IS NULL)
   // =========================================================================
   if (!currentUser) {
     return (
@@ -401,7 +452,7 @@ export default function SmartFishermenApp() {
               <LifeBuoy className="w-9 h-9" />
             </div>
             <h1 className="text-xl font-extrabold text-white tracking-wider uppercase">SMART FISHERMEN SAFETY SYSTEM</h1>
-            <p className="text-xs text-slate-400">Select Portal Role & Log in to access your designated interface</p>
+            <p className="text-xs text-slate-400">Authentic Database API Authentication • Select Portal Role</p>
           </div>
 
           {/* Role Selection Tabs */}
@@ -439,7 +490,13 @@ export default function SmartFishermenApp() {
             </button>
           </div>
 
-          {/* Login Form */}
+          {authError && (
+            <div className="bg-red-600/20 border border-red-500/30 text-red-400 p-3 rounded-xl text-xs font-bold text-center">
+              {authError}
+            </div>
+          )}
+
+          {/* Authentic API Login Form */}
           <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
             <div>
               <label className="text-slate-400 block mb-1.5 font-bold flex items-center space-x-1">
@@ -451,6 +508,7 @@ export default function SmartFishermenApp() {
                 required
                 value={loginEmail}
                 onChange={e => setLoginEmail(e.target.value)}
+                placeholder="Enter user email..."
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500"
               />
             </div>
@@ -471,6 +529,7 @@ export default function SmartFishermenApp() {
 
             <button
               type="submit"
+              disabled={authenticating}
               className={`w-full py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-white shadow-lg transition flex items-center justify-center space-x-2 ${
                 loginRole === 'fisherman' ? 'bg-cyan-600 hover:bg-cyan-500' :
                 loginRole === 'family' ? 'bg-emerald-600 hover:bg-emerald-500' :
@@ -478,26 +537,29 @@ export default function SmartFishermenApp() {
               }`}
             >
               <UserCheck className="w-4 h-4" />
-              <span>LOG IN TO {loginRole.toUpperCase()} PORTAL</span>
+              <span>{authenticating ? 'AUTHENTICATING WITH DATABASE...' : `LOG IN TO ${loginRole.toUpperCase()} PORTAL`}</span>
             </button>
           </form>
 
-          {/* 1-Click Quick Demo Login Shortcuts */}
+          {/* Dynamic DB User Accounts API Login Shortcuts */}
           <div className="pt-2 border-t border-slate-800 space-y-2">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block text-center">Or 1-Click Demo Login As:</span>
+            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block text-center">Registered Users API Authentication:</span>
             <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <button onClick={() => handleQuickDemoLogin('fisherman')} className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-cyan-300 font-bold text-left">
-                🛥️ Fisherman (Ramesh)
-              </button>
-              <button onClick={() => handleQuickDemoLogin('family')} className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-emerald-300 font-bold text-left">
-                🛟 Family (Lakshmi)
-              </button>
-              <button onClick={() => handleQuickDemoLogin('rescue')} className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-red-300 font-bold text-left">
-                🚨 Coast Guard (Rajesh)
-              </button>
-              <button onClick={() => handleQuickDemoLogin('admin')} className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-purple-300 font-bold text-left">
-                🏛️ Govt Admin (Suresh)
-              </button>
+              {dbUsers.map(u => (
+                <button
+                  key={u.id}
+                  onClick={() => handleQuickApiLogin(u.email, u.role)}
+                  className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-slate-200 font-bold text-left flex items-center space-x-2 transition"
+                >
+                  <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-400 flex items-center justify-center text-[10px]">
+                    {u.name[0]}
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="truncate text-white text-[10px]">{u.name}</p>
+                    <p className="text-[9px] text-cyan-400 uppercase font-bold">{u.role}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -527,7 +589,7 @@ export default function SmartFishermenApp() {
                 {userRole.toUpperCase()} PORTAL ACTIVE
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400">Strict Role Isolation • Secure Authenticated Session</p>
+            <p className="text-[11px] text-slate-400">Strict Role Isolation • Authenticated JWT Session Active</p>
           </div>
         </div>
 
@@ -548,7 +610,7 @@ export default function SmartFishermenApp() {
             className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center space-x-1"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Switch / Logout</span>
+            <span>Logout</span>
           </button>
         </div>
 
@@ -590,7 +652,7 @@ export default function SmartFishermenApp() {
           </div>
         ) : (
           <>
-            {/* 1. FISHERMAN PORTAL VIEW (ONLY VISIBLE WHEN LOGGED IN AS FISHERMAN) */}
+            {/* 1. FISHERMAN PORTAL VIEW */}
             {userRole === 'fisherman' && boat && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
@@ -745,7 +807,7 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 2. FAMILY PORTAL VIEW (ONLY VISIBLE WHEN LOGGED IN AS FAMILY) */}
+            {/* 2. FAMILY PORTAL VIEW */}
             {userRole === 'family' && boat && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
@@ -891,7 +953,7 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 3. COAST GUARD RESCUE VIEW (ONLY VISIBLE WHEN LOGGED IN AS COAST GUARD) */}
+            {/* 3. COAST GUARD RESCUE VIEW */}
             {userRole === 'rescue' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
@@ -1002,7 +1064,7 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 4. GOVT ADMIN VIEW (ONLY VISIBLE WHEN LOGGED IN AS ADMIN) */}
+            {/* 4. GOVT ADMIN VIEW */}
             {userRole === 'admin' && (
               <div className="space-y-6">
                 

@@ -12,6 +12,7 @@ const initialData = {
       phone: '+91 9876543210',
       password: 'password123',
       role: 'fisherman',
+      status: 'APPROVED',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
     },
     {
@@ -21,6 +22,7 @@ const initialData = {
       phone: '+91 9876543211',
       password: 'password123',
       role: 'fisherman',
+      status: 'APPROVED',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150'
     },
     {
@@ -30,6 +32,7 @@ const initialData = {
       phone: '+91 9876543212',
       password: 'password123',
       role: 'family',
+      status: 'APPROVED',
       avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150'
     },
     {
@@ -39,6 +42,7 @@ const initialData = {
       phone: '+91 9876543213',
       password: 'password123',
       role: 'rescue_team',
+      status: 'APPROVED',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
     },
     {
@@ -48,7 +52,19 @@ const initialData = {
       phone: '+91 9876543214',
       password: 'password123',
       role: 'gov_admin',
+      status: 'APPROVED',
       avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150'
+    },
+    {
+      id: 'u-pending-01',
+      name: 'Kiran Deepsea Fisherman',
+      email: 'kiran@fisherman.org',
+      phone: '+91 9876543299',
+      aadhaarNumber: '9988-7766-5544',
+      password: 'password123',
+      role: 'fisherman',
+      status: 'PENDING_ADMIN_APPROVAL',
+      requestedAt: new Date().toISOString()
     }
   ],
   boats: [
