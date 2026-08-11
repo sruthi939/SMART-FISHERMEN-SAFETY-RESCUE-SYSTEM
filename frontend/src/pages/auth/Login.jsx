@@ -48,8 +48,13 @@ export default function Login() {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-slate-400">
-          Don't have an account? <Link to="/auth/register" className="text-cyan-400 font-semibold hover:underline">Register here</Link>
+        <div className="mt-6 text-center text-xs text-slate-400 flex flex-col gap-2">
+          <div>
+            Don't have an account? <Link to="/auth/register" className="text-cyan-400 font-semibold hover:underline">Register here</Link>
+          </div>
+          <Link to="/" className="text-slate-500 hover:text-slate-300 font-medium text-[11px] underline">
+            ← Back to Portal Selection Gateway
+          </Link>
         </div>
       </div>
     </div>
