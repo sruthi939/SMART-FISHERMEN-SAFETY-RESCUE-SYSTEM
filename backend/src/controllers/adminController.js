@@ -31,6 +31,32 @@ exports.getCoastalDistricts = (req, res) => {
   res.json({ coastalDistricts: db.keralaCoastalDistricts || [] });
 };
 
+exports.getPendingUsers = (req, res) => {
+  const db = readData();
+  const pendingUsers = db.users.filter(u => u.status === 'PENDING_ADMIN_APPROVAL');
+  res.json({ pendingUsers });
+};
+
+exports.verifyUser = (req, res) => {
+  const { userId } = req.params;
+  const { status } = req.body; // 'APPROVED' or 'REJECTED'
+  const db = readData();
+
+  const userIndex = db.users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ error: 'User registration request not found' });
+  }
+
+  db.users[userIndex].status = status || 'APPROVED';
+  db.users[userIndex].verifiedAt = new Date().toISOString();
+  writeData(db);
+
+  res.json({
+    message: `User access ${status || 'APPROVED'} successfully by Government Admin.`,
+    user: db.users[userIndex]
+  });
+};
+
 exports.registerBoat = (req, res) => {
   const { registrationNumber, name, boatType, lengthMeters, homePort, ownerName, licenseNumber } = req.body;
   const db = readData();

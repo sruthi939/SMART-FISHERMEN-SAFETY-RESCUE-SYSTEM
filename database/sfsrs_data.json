@@ -60,15 +60,15 @@
       "insurancePolicy": "UIIC-MAR-99812",
       "insuranceExpiry": "2027-12-31",
       "status": "AT_SEA",
-      "latitude": 9.925959330889452,
-      "longitude": 76.23907567686567,
-      "speedKnots": 8.2,
-      "headingDeg": 245,
+      "latitude": 9.819571432239458,
+      "longitude": 76.05072682020845,
+      "speedKnots": 6.5,
+      "headingDeg": 230,
       "fuelPct": 10,
-      "batteryV": 13.4,
+      "batteryV": 13.3,
       "waterLeak": false,
-      "tiltAngle": 3.4,
-      "lastUpdated": "2026-08-11T06:36:13.847Z"
+      "tiltAngle": 1.6,
+      "lastUpdated": "2026-08-11T06:41:42.372Z"
     },
     {
       "id": "b-105",

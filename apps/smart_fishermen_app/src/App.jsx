@@ -4,7 +4,7 @@ import {
   Battery, AlertTriangle, MapPin, Users, Wind, Waves, CheckCircle2, 
   LifeBuoy, PhoneCall, Clock, Navigation, Plus, FileCheck, IndianRupee, 
   RefreshCw, Camera, Mic, Cpu, Lock, ShieldCheck, Zap, Crosshair, Server, Database, Satellite, Layers, Map,
-  MessageSquare, Send, Stethoscope, TrendingUp, Bell, Check, LogOut, UserCheck, KeyRound, Mail
+  MessageSquare, Send, Stethoscope, TrendingUp, Bell, Check, LogOut, UserCheck, KeyRound, Mail, UserPlus, FileText, CheckCircle, XCircle
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
@@ -44,14 +44,20 @@ const harborMarker = new L.DivIcon({
 });
 
 export default function SmartFishermenApp() {
-  // Real API Authentication & Portal Isolation State
+  // Real API Authentication & Access Control State (Clean, No Pre-filled Mock Credentials)
   const [currentUser, setCurrentUser] = useState(null); // null = Login Screen
   const [dbUsers, setDbUsers] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
   const [loginRole, setLoginRole] = useState('fisherman');
-  const [loginEmail, setLoginEmail] = useState('ramesh@fisherman.org');
-  const [loginPassword, setLoginPassword] = useState('password123');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [authenticating, setAuthenticating] = useState(false);
+
+  // Registration Modal State
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [regForm, setRegForm] = useState({ name: '', email: '', phone: '', aadhaarNumber: '', password: '', role: 'fisherman' });
+  const [regSuccessMsg, setRegSuccessMsg] = useState(null);
 
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -85,27 +91,30 @@ export default function SmartFishermenApp() {
   const [showDroneHUD, setShowDroneHUD] = useState(false);
   const [dronePayloadDropped, setDronePayloadDropped] = useState(false);
 
-  // Admin Registration Modal State
-  const [showRegModal, setShowRegModal] = useState(false);
-  const [regForm, setRegForm] = useState({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: 'Kochi Harbor' });
+  // Admin Boat Reg Modal
+  const [showBoatRegModal, setShowBoatRegModal] = useState(false);
+  const [boatRegForm, setBoatRegForm] = useState({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: '' });
 
-  // Fetch registered DB users from backend API
-  useEffect(() => {
+  // Fetch registered DB users & pending approvals from API
+  const fetchUsersAndPending = () => {
     fetch(`${BACKEND_URL}/api/auth/users`)
       .then(res => res.json())
-      .then(data => {
-        if (data.users) setDbUsers(data.users);
-      })
+      .then(data => { if (data.users) setDbUsers(data.users); })
       .catch(err => console.error(err));
+
+    fetch(`${BACKEND_URL}/api/admin/pending-users`)
+      .then(res => res.json())
+      .then(data => { if (data.pendingUsers) setPendingUsers(data.pendingUsers); })
+      .catch(err => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchUsersAndPending();
   }, []);
 
   const handleSelectRoleTab = (roleKey) => {
     setLoginRole(roleKey);
     setAuthError(null);
-    const foundUser = dbUsers.find(u => u.role === roleKey);
-    if (foundUser) {
-      setLoginEmail(foundUser.email);
-    }
   };
 
   // Authentic API Authentication Handler (POST /api/auth/login)
@@ -119,9 +128,10 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: loginEmail, password: loginPassword, role: loginRole })
     })
-    .then(res => {
-      if (!res.ok) throw new Error('Authentication failed. Invalid credentials.');
-      return res.json();
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Authentication failed.');
+      return data;
     })
     .then(data => {
       if (data.user) {
@@ -136,34 +146,52 @@ export default function SmartFishermenApp() {
     });
   };
 
-  const handleQuickApiLogin = (targetEmail, targetRole) => {
-    setLoginRole(targetRole);
-    setLoginEmail(targetEmail);
-    setAuthenticating(true);
+  // Handle User Registration Submission (POST /api/auth/register)
+  const handleUserRegistrationSubmit = (e) => {
+    e.preventDefault();
+    setRegSuccessMsg(null);
     setAuthError(null);
 
-    fetch(`${BACKEND_URL}/api/auth/login`, {
+    fetch(`${BACKEND_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: targetEmail, password: 'password123', role: targetRole })
+      body: JSON.stringify(regForm)
+    })
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      return data;
+    })
+    .then(data => {
+      setRegSuccessMsg(data.message);
+      fetchUsersAndPending();
+      setTimeout(() => {
+        setShowRegisterModal(false);
+        setRegSuccessMsg(null);
+        setRegForm({ name: '', email: '', phone: '', aadhaarNumber: '', password: '', role: 'fisherman' });
+      }, 3500);
+    })
+    .catch(err => setAuthError(err.message));
+  };
+
+  // Admin Approve or Reject Access Request
+  const handleVerifyUserAccess = (userId, targetStatus) => {
+    fetch(`${BACKEND_URL}/api/admin/verify-user/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: targetStatus })
     })
     .then(res => res.json())
-    .then(data => {
-      if (data.user) {
-        if (data.token) localStorage.setItem('sfsrs_token', data.token);
-        setCurrentUser(data.user);
-      }
-      setAuthenticating(false);
-    })
-    .catch(err => {
-      setAuthError('Authentication error');
-      setAuthenticating(false);
+    .then(() => {
+      fetchUsersAndPending();
     });
   };
 
   const handleLogout = () => {
     localStorage.removeItem('sfsrs_token');
     setCurrentUser(null);
+    setLoginEmail('');
+    setLoginPassword('');
   };
 
   // Fetch initial backend data
@@ -322,8 +350,8 @@ export default function SmartFishermenApp() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        wearableId: targetCrew.wearableId || 'wb-002',
-        fishermanId: targetCrew.fishermanId || 'u-fish-02',
+        wearableId: targetCrew?.wearableId || 'wb-002',
+        fishermanId: targetCrew?.fishermanId || 'u-fish-02',
         boatId: boat.id,
         latitude: boat.latitude,
         longitude: boat.longitude
@@ -386,19 +414,19 @@ export default function SmartFishermenApp() {
     });
   };
 
-  const handleRegisterBoat = (e) => {
+  const handleRegisterBoatSubmit = (e) => {
     e.preventDefault();
     fetch(`${BACKEND_URL}/api/admin/register-boat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(regForm)
+      body: JSON.stringify(boatRegForm)
     })
     .then(res => res.json())
     .then(data => {
       if (data.boat) {
         setAllBoats(prev => [...prev, data.boat]);
-        setShowRegModal(false);
-        setRegForm({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: 'Kochi Harbor' });
+        setShowBoatRegModal(false);
+        setBoatRegForm({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: '' });
       }
     });
   };
@@ -411,12 +439,12 @@ export default function SmartFishermenApp() {
   const distanceNM = parseFloat((Math.sqrt(Math.pow(boatLat - homePortLat, 2) + Math.pow(boatLon - homePortLon, 2)) * 60).toFixed(1));
   const boatSpeed = boat?.speedKnots || 8.4;
   const hoursToPort = boatSpeed > 0 ? parseFloat((distanceNM / boatSpeed).toFixed(1)) : 0;
-  const captain = crew.find(c => c.role === 'CAPTAIN') || crew[0] || { name: 'Ramesh Kumar', role: 'CAPTAIN' };
+  const captain = crew.find(c => c.role === 'CAPTAIN') || crew[0];
 
   // Dynamic AI MOB Drift Points
   const mobIncident = emergencies.find(e => e.emergencyType === 'MAN_OVERBOARD' && e.status !== 'RESCUED');
-  const initialMobLat = mobIncident ? mobIncident.latitude : 9.8540;
-  const initialMobLon = mobIncident ? mobIncident.longitude : 76.1200;
+  const initialMobLat = mobIncident ? mobIncident.latitude : (boat?.latitude || 9.8540);
+  const initialMobLon = mobIncident ? mobIncident.longitude : (boat?.longitude || 76.1200);
 
   const driftPoints = driftData?.trajectory ? [
     [initialMobLat, initialMobLon],
@@ -434,7 +462,7 @@ export default function SmartFishermenApp() {
     : coastalDistricts.filter(d => d.code === selectedDistrict || d.districtName.toUpperCase().includes(selectedDistrict.toUpperCase()));
 
   // =========================================================================
-  // 1. AUTHENTIC API LOGIN SCREEN (WHEN CURRENTUSER IS NULL)
+  // 1. AUTHENTIC API LOGIN & REGISTRATION SCREEN (WHEN CURRENTUSER IS NULL)
   // =========================================================================
   if (!currentUser) {
     return (
@@ -452,7 +480,7 @@ export default function SmartFishermenApp() {
               <LifeBuoy className="w-9 h-9" />
             </div>
             <h1 className="text-xl font-extrabold text-white tracking-wider uppercase">SMART FISHERMEN SAFETY SYSTEM</h1>
-            <p className="text-xs text-slate-400">Authentic Database API Authentication • Select Portal Role</p>
+            <p className="text-xs text-slate-400">Authentic Database API Authentication • Admin Verification Required</p>
           </div>
 
           {/* Role Selection Tabs */}
@@ -491,7 +519,7 @@ export default function SmartFishermenApp() {
           </div>
 
           {authError && (
-            <div className="bg-red-600/20 border border-red-500/30 text-red-400 p-3 rounded-xl text-xs font-bold text-center">
+            <div className="bg-red-600/20 border border-red-500/40 text-red-400 p-3.5 rounded-xl text-xs font-bold leading-relaxed shadow-lg">
               {authError}
             </div>
           )}
@@ -523,6 +551,7 @@ export default function SmartFishermenApp() {
                 required
                 value={loginPassword}
                 onChange={e => setLoginPassword(e.target.value)}
+                placeholder="Enter password..."
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500"
               />
             </div>
@@ -537,33 +566,80 @@ export default function SmartFishermenApp() {
               }`}
             >
               <UserCheck className="w-4 h-4" />
-              <span>{authenticating ? 'AUTHENTICATING WITH DATABASE...' : `LOG IN TO ${loginRole.toUpperCase()} PORTAL`}</span>
+              <span>{authenticating ? 'VERIFYING WITH DATABASE...' : `LOG IN TO ${loginRole.toUpperCase()} PORTAL`}</span>
             </button>
           </form>
 
-          {/* Dynamic DB User Accounts API Login Shortcuts */}
-          <div className="pt-2 border-t border-slate-800 space-y-2">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block text-center">Registered Users API Authentication:</span>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              {dbUsers.map(u => (
-                <button
-                  key={u.id}
-                  onClick={() => handleQuickApiLogin(u.email, u.role)}
-                  className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-slate-200 font-bold text-left flex items-center space-x-2 transition"
-                >
-                  <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-400 flex items-center justify-center text-[10px]">
-                    {u.name[0]}
-                  </div>
-                  <div className="overflow-hidden">
-                    <p className="truncate text-white text-[10px]">{u.name}</p>
-                    <p className="text-[9px] text-cyan-400 uppercase font-bold">{u.role}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
+          {/* New Portal Access Registration Request Button */}
+          <div className="pt-3 border-t border-slate-800 text-center space-y-3">
+            <button
+              onClick={() => { setShowRegisterModal(true); setAuthError(null); }}
+              className="w-full bg-slate-950 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 font-bold p-3 rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-md"
+            >
+              <UserPlus className="w-4 h-4 text-cyan-400" />
+              <span>Request New Portal Access Registration</span>
+            </button>
           </div>
 
         </div>
+
+        {/* Portal Access Registration Modal */}
+        {showRegisterModal && (
+          <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
+            <div className="bg-slate-900 border border-cyan-500/40 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 className="font-extrabold text-sm text-white flex items-center space-x-2">
+                  <UserPlus className="w-5 h-5 text-cyan-400" />
+                  <span>Portal Access Registration Application</span>
+                </h3>
+                <button onClick={() => setShowRegisterModal(false)} className="text-slate-400 hover:text-white font-bold text-xs">Close</button>
+              </div>
+
+              {regSuccessMsg ? (
+                <div className="bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 p-4 rounded-xl text-xs font-bold text-center leading-relaxed">
+                  <CheckCircle className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
+                  {regSuccessMsg}
+                </div>
+              ) : (
+                <form onSubmit={handleUserRegistrationSubmit} className="space-y-3 text-xs">
+                  <div>
+                    <label className="text-slate-400 block mb-1">Full Name</label>
+                    <input type="text" required value={regForm.name} onChange={e => setRegForm({ ...regForm, name: e.target.value })} placeholder="Enter full name..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Email Address</label>
+                    <input type="email" required value={regForm.email} onChange={e => setRegForm({ ...regForm, email: e.target.value })} placeholder="Enter email address..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Phone Number</label>
+                    <input type="text" required value={regForm.phone} onChange={e => setRegForm({ ...regForm, phone: e.target.value })} placeholder="Enter phone number..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Aadhaar / Marine License ID</label>
+                    <input type="text" required value={regForm.aadhaarNumber} onChange={e => setRegForm({ ...regForm, aadhaarNumber: e.target.value })} placeholder="Enter ID number..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Password</label>
+                    <input type="password" required value={regForm.password} onChange={e => setRegForm({ ...regForm, password: e.target.value })} placeholder="Create password..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Requested Portal Role</label>
+                    <select value={regForm.role} onChange={e => setRegForm({ ...regForm, role: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-bold">
+                      <option value="fisherman">Fisherman Vessel Portal</option>
+                      <option value="family">Family Care Portal</option>
+                      <option value="rescue">Coast Guard Rescue Portal</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end space-x-2 pt-2">
+                    <button type="button" onClick={() => setShowRegisterModal(false)} className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl">Cancel</button>
+                    <button type="submit" className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl shadow-lg">Submit Application</button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     );
   }
@@ -589,7 +665,7 @@ export default function SmartFishermenApp() {
                 {userRole.toUpperCase()} PORTAL ACTIVE
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400">Strict Role Isolation • Authenticated JWT Session Active</p>
+            <p className="text-[11px] text-slate-400">Admin Verified Account • Authenticated Session</p>
           </div>
         </div>
 
@@ -601,7 +677,7 @@ export default function SmartFishermenApp() {
             </div>
             <div className="text-left">
               <span className="font-extrabold text-white block">{currentUser.name}</span>
-              <span className="text-[10px] text-cyan-400 uppercase font-bold">{userRole} account</span>
+              <span className="text-[10px] text-emerald-400 uppercase font-bold">APPROVED {userRole}</span>
             </div>
           </div>
 
@@ -815,9 +891,15 @@ export default function SmartFishermenApp() {
                   
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center space-x-4">
-                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt={captain.name} className="w-16 h-16 rounded-full border-2 border-emerald-400 object-cover" />
+                      {captain?.avatar ? (
+                        <img src={captain.avatar} alt={captain.name} className="w-16 h-16 rounded-full border-2 border-emerald-400 object-cover" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-emerald-600/30 text-emerald-300 flex items-center justify-center font-extrabold text-xl border-2 border-emerald-400">
+                          {captain?.name?.[0] || 'C'}
+                        </div>
+                      )}
                       <div>
-                        <h3 className="text-lg font-extrabold text-white">{captain.name}</h3>
+                        <h3 className="text-lg font-extrabold text-white">{captain?.name || 'Captain'}</h3>
                         <p className="text-xs text-slate-400">Vessel: <strong>{boat.name} ({boat.registrationNumber})</strong> • {boat.homePort}</p>
                         <p className="text-xs text-emerald-400 font-bold mt-1 flex items-center space-x-1">
                           <Check className="w-3.5 h-3.5" />
@@ -1041,7 +1123,7 @@ export default function SmartFishermenApp() {
                           <span className="bg-red-600 text-white px-2 py-0.5 rounded font-black uppercase text-[10px]">{e.emergencyType}</span>
                           <span className="text-[10px] text-slate-400">Live</span>
                         </div>
-                        <h4 className="font-bold text-white text-sm mt-1.5">{e.boatName || 'Sea Falcon'} ({e.registrationNumber || 'KL-07-FISH-102'})</h4>
+                        <h4 className="font-bold text-white text-sm mt-1.5">{e.boatName} ({e.registrationNumber})</h4>
                         <p className="text-xs text-slate-300 mt-1 leading-relaxed">{e.description}</p>
 
                         <div className="mt-3 pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
@@ -1068,6 +1150,69 @@ export default function SmartFishermenApp() {
             {userRole === 'admin' && (
               <div className="space-y-6">
                 
+                {/* Pending User Access Applications Panel */}
+                <div className="bg-slate-900 border border-amber-500/40 rounded-2xl p-5 space-y-4 shadow-xl">
+                  <div className="flex justify-between items-center border-b border-amber-500/30 pb-3">
+                    <div className="flex items-center space-x-2">
+                      <UserPlus className="w-5 h-5 text-amber-400 animate-pulse" />
+                      <h3 className="font-extrabold text-sm text-white uppercase tracking-wider">
+                        Pending Portal Access Registration Requests ({pendingUsers.length})
+                      </h3>
+                    </div>
+                    <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-full font-bold">
+                      ADMIN APPROVAL GATEKEEPER ACTIVE
+                    </span>
+                  </div>
+
+                  {pendingUsers.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-4">No pending user registration requests. All applicant accounts verified!</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs text-slate-300">
+                        <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                          <tr>
+                            <th className="p-3">Applicant Name</th>
+                            <th className="p-3">Email Address</th>
+                            <th className="p-3">Aadhaar / ID</th>
+                            <th className="p-3">Requested Role</th>
+                            <th className="p-3">Application Date</th>
+                            <th className="p-3 text-right">Admin Verification Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60">
+                          {pendingUsers.map(pu => (
+                            <tr key={pu.id} className="hover:bg-slate-800/40 transition">
+                              <td className="p-3 font-bold text-white">{pu.name}</td>
+                              <td className="p-3 text-cyan-300">{pu.email}</td>
+                              <td className="p-3 font-mono text-[11px]">{pu.aadhaarNumber}</td>
+                              <td className="p-3">
+                                <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                                  {pu.role}
+                                </span>
+                              </td>
+                              <td className="p-3 text-[11px] text-slate-400">{new Date(pu.requestedAt || Date.now()).toLocaleDateString()}</td>
+                              <td className="p-3 text-right space-x-2">
+                                <button
+                                  onClick={() => handleVerifyUserAccess(pu.id, 'APPROVED')}
+                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-xs shadow-md transition"
+                                >
+                                  APPROVE ACCESS
+                                </button>
+                                <button
+                                  onClick={() => handleVerifyUserAccess(pu.id, 'REJECTED')}
+                                  className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 px-3 py-1 rounded-lg text-xs font-bold transition"
+                                >
+                                  REJECT
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
                     <span className="text-slate-400 text-xs font-bold">ALL KERALA COASTAL DISTRICTS</span>
@@ -1123,7 +1268,7 @@ export default function SmartFishermenApp() {
                       <Anchor className="w-4 h-4 text-cyan-400" />
                       <span>Official Kerala State Fisheries & Harbor Registry Directory</span>
                     </h3>
-                    <button onClick={() => setShowRegModal(true)} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1">
+                    <button onClick={() => setShowBoatRegModal(true)} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1">
                       <Plus className="w-3.5 h-3.5" />
                       <span>Register New Boat</span>
                     </button>
@@ -1207,7 +1352,7 @@ export default function SmartFishermenApp() {
                             <td className="p-4">
                               <span className="font-mono text-[10px] bg-slate-950 px-2 py-1 rounded border border-purple-500/30 text-purple-300 flex items-center space-x-1">
                                 <ShieldCheck className="w-3 h-3 text-purple-400 flex-shrink-0" />
-                                <span>{b.blockchainTxHash ? `${b.blockchainTxHash.slice(0, 18)}...` : '0x8f23a9b1c74d8120e3...'}</span>
+                                <span>{b.blockchainTxHash}</span>
                               </span>
                             </td>
                           </tr>
@@ -1299,26 +1444,26 @@ export default function SmartFishermenApp() {
         </div>
       )}
 
-      {/* Registration Modal */}
-      {showRegModal && (
+      {/* Boat Registration Modal */}
+      {showBoatRegModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
             <h3 className="text-base font-extrabold text-white">Register New Fishing Vessel</h3>
-            <form onSubmit={handleRegisterBoat} className="space-y-3 text-xs">
+            <form onSubmit={handleRegisterBoatSubmit} className="space-y-3 text-xs">
               <div>
                 <label className="text-slate-400 block mb-1">Vessel Name</label>
-                <input type="text" required value={regForm.name} onChange={e => setRegForm({ ...regForm, name: e.target.value })} placeholder="e.g. Sea Falcon" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
+                <input type="text" required value={boatRegForm.name} onChange={e => setBoatRegForm({ ...boatRegForm, name: e.target.value })} placeholder="Enter vessel name..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
               </div>
               <div>
                 <label className="text-slate-400 block mb-1">Registration Number</label>
-                <input type="text" required value={regForm.registrationNumber} onChange={e => setRegForm({ ...regForm, registrationNumber: e.target.value })} placeholder="e.g. KL-07-FISH-200" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
+                <input type="text" required value={boatRegForm.registrationNumber} onChange={e => setBoatRegForm({ ...boatRegForm, registrationNumber: e.target.value })} placeholder="e.g. KL-07-FISH-200" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
               </div>
               <div>
                 <label className="text-slate-400 block mb-1">Home Port</label>
-                <input type="text" required value={regForm.homePort} onChange={e => setRegForm({ ...regForm, homePort: e.target.value })} placeholder="e.g. Kochi Harbor" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
+                <input type="text" required value={boatRegForm.homePort} onChange={e => setBoatRegForm({ ...boatRegForm, homePort: e.target.value })} placeholder="e.g. Kochi Harbor" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
               </div>
               <div className="flex justify-end space-x-2 pt-2">
-                <button type="button" onClick={() => setShowRegModal(false)} className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl">Cancel</button>
+                <button type="button" onClick={() => setShowBoatRegModal(false)} className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl">Cancel</button>
                 <button type="submit" className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl">Register Vessel</button>
               </div>
             </form>
