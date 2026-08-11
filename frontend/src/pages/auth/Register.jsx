@@ -44,13 +44,26 @@ export default function Register() {
     setShowPass(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleRegister = (e, roleName, redirectPath) => {
+  const handleRegister = async (e, roleName, redirectPath) => {
     e.preventDefault();
-    addNotification(`${roleName} Registration Successful! Redirecting...`, 'info');
-    login({ name: `${roleName} User`, role: roleName.toLowerCase() }, 'jwt_sample_token');
-    setTimeout(() => {
-      navigate(redirectPath);
-    }, 1000);
+    const formData = new FormData(e.target);
+    const formProps = Object.fromEntries(formData);
+    formProps.role = roleName.toLowerCase();
+
+    try {
+      const res = await authService.register(formProps);
+      const user = res.user || { name: formProps.name || roleName, role: roleName.toLowerCase() };
+      const token = res.token || 'jwt_sample_token';
+      
+      login(user, token);
+      addNotification(`${roleName} Registration Successful! Redirecting...`, 'info');
+      setTimeout(() => {
+        navigate(redirectPath);
+      }, 800);
+    } catch (err) {
+      console.error('Registration error:', err);
+      addNotification(err.message || 'Registration failed. Please try again.', 'error');
+    }
   };
 
   const tabs = [
