@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ShieldAlert, Anchor, Heart, Building2, Radio, Compass, Fuel, 
-  Battery, AlertTriangle, MapPin, Users, Wind, Waves, CheckCircle2, 
-  LifeBuoy, PhoneCall, Clock, Navigation, Plus, FileCheck, IndianRupee, 
-  RefreshCw, Camera, Mic, Cpu, Lock, ShieldCheck, Zap, Crosshair, Server, Database, Satellite, Layers, Map,
-  MessageSquare, Send, Stethoscope, TrendingUp, Bell, Check, LogOut, UserCheck, KeyRound, Mail, UserPlus, FileText, CheckCircle, XCircle
+import {
+  ShieldAlert, Anchor, Heart, Building2, Radio, AlertTriangle, MapPin, LifeBuoy, PhoneCall, Plus, RefreshCw, Camera, Mic,
+  Lock, ShieldCheck, Zap, Crosshair, Satellite, Map, MessageSquare,
+  Send, Stethoscope, TrendingUp, Bell, Check, LogOut, UserCheck,
+  KeyRound, Mail, UserPlus, CheckCircle
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
@@ -44,7 +43,7 @@ const harborMarker = new L.DivIcon({
 });
 
 export default function SmartFishermenApp() {
-  // Real API Authentication & Access Control State (Clean, No Pre-filled Mock Credentials)
+  // Real API Authentication & Access Control State
   const [currentUser, setCurrentUser] = useState(null); // null = Login Screen
   const [dbUsers, setDbUsers] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -69,7 +68,6 @@ export default function SmartFishermenApp() {
   const [weather, setWeather] = useState(null);
   const [emergencies, setEmergencies] = useState([]);
   const [rescueUnits, setRescueUnits] = useState([]);
-  const [adminSummary, setAdminSummary] = useState(null);
   const [coastalDistricts, setCoastalDistricts] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState('ALL');
   const [imblWarning, setImblWarning] = useState(null);
@@ -128,22 +126,22 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: loginEmail, password: loginPassword, role: loginRole })
     })
-    .then(async res => {
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Authentication failed.');
-      return data;
-    })
-    .then(data => {
-      if (data.user) {
-        if (data.token) localStorage.setItem('sfsrs_token', data.token);
-        setCurrentUser(data.user);
-      }
-      setAuthenticating(false);
-    })
-    .catch(err => {
-      setAuthError(err.message || 'Login failed');
-      setAuthenticating(false);
-    });
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Authentication failed.');
+        return data;
+      })
+      .then(data => {
+        if (data.user) {
+          if (data.token) localStorage.setItem('sfsrs_token', data.token);
+          setCurrentUser(data.user);
+        }
+        setAuthenticating(false);
+      })
+      .catch(err => {
+        setAuthError(err.message || 'Login failed');
+        setAuthenticating(false);
+      });
   };
 
   // Handle User Registration Submission (POST /api/auth/register)
@@ -157,21 +155,21 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(regForm)
     })
-    .then(async res => {
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Registration failed');
-      return data;
-    })
-    .then(data => {
-      setRegSuccessMsg(data.message);
-      fetchUsersAndPending();
-      setTimeout(() => {
-        setShowRegisterModal(false);
-        setRegSuccessMsg(null);
-        setRegForm({ name: '', email: '', phone: '', aadhaarNumber: '', password: '', role: 'fisherman' });
-      }, 3500);
-    })
-    .catch(err => setAuthError(err.message));
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+        return data;
+      })
+      .then(data => {
+        setRegSuccessMsg(data.message);
+        fetchUsersAndPending();
+        setTimeout(() => {
+          setShowRegisterModal(false);
+          setRegSuccessMsg(null);
+          setRegForm({ name: '', email: '', phone: '', aadhaarNumber: '', password: '', role: 'fisherman' });
+        }, 3500);
+      })
+      .catch(err => setAuthError(err.message));
   };
 
   // Admin Approve or Reject Access Request
@@ -181,10 +179,10 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: targetStatus })
     })
-    .then(res => res.json())
-    .then(() => {
-      fetchUsersAndPending();
-    });
+      .then(res => res.json())
+      .then(() => {
+        fetchUsersAndPending();
+      });
   };
 
   const handleLogout = () => {
@@ -252,7 +250,6 @@ export default function SmartFishermenApp() {
     fetch(`${BACKEND_URL}/api/admin/dashboard`)
       .then(res => res.json())
       .then(data => {
-        if (data.summary) setAdminSummary(data.summary);
         if (data.boats) setAllBoats(data.boats);
         if (data.keralaCoastalDistricts) setCoastalDistricts(data.keralaCoastalDistricts);
         setLoading(false);
@@ -330,7 +327,7 @@ export default function SmartFishermenApp() {
     if (!boat) return;
     setSosActive(true);
     setSosProgress(100);
-    const desc = voiceLang 
+    const desc = voiceLang
       ? `Voice-Activated SOS distress trigger in ${voiceLang} aboard ${boat.name} (${boat.registrationNumber}).`
       : `Mayday SOS button pressed aboard ${boat.name} (${boat.registrationNumber}).`;
 
@@ -339,8 +336,8 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ boatId: boat.id, latitude: boat.latitude, longitude: boat.longitude, description: desc })
     })
-    .then(res => res.json())
-    .then(data => { if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]); });
+      .then(res => res.json())
+      .then(data => { if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]); });
   };
 
   const triggerMOB = (crewId) => {
@@ -357,11 +354,11 @@ export default function SmartFishermenApp() {
         longitude: boat.longitude
       })
     })
-    .then(res => res.json())
-    .then(data => {
-      setCrew(prev => prev.map(c => c.id === crewId ? { ...c, status: 'OVERBOARD' } : c));
-      if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]);
-    });
+      .then(res => res.json())
+      .then(data => {
+        setCrew(prev => prev.map(c => c.id === crewId ? { ...c, status: 'OVERBOARD' } : c));
+        if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]);
+      });
   };
 
   const handleSendFamilyMessage = (e) => {
@@ -378,13 +375,13 @@ export default function SmartFishermenApp() {
         messageText: chatInputText
       })
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.chatMessage) {
-        setFamilyChatMessages(prev => [...prev, data.chatMessage]);
-        setChatInputText('');
-      }
-    });
+      .then(res => res.json())
+      .then(data => {
+        if (data.chatMessage) {
+          setFamilyChatMessages(prev => [...prev, data.chatMessage]);
+          setChatInputText('');
+        }
+      });
   };
 
   const handleDispatch = (emergencyId, unitType = 'PATROL') => {
@@ -393,13 +390,13 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ emergencyId })
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.result && data.result.emergency) {
-        setEmergencies(prev => prev.map(e => e.id === emergencyId ? data.result.emergency : e));
-      }
-      if (unitType === 'DRONE') setShowDroneHUD(true);
-    });
+      .then(res => res.json())
+      .then(data => {
+        if (data.result && data.result.emergency) {
+          setEmergencies(prev => prev.map(e => e.id === emergencyId ? data.result.emergency : e));
+        }
+        if (unitType === 'DRONE') setShowDroneHUD(true);
+      });
   };
 
   const handleResolve = (emergencyId) => {
@@ -408,10 +405,10 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ resolutionNotes: 'Victim safely recovered by Coast Guard Patrol Vessel & SAR Drone.' })
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.emergency) setEmergencies(prev => prev.map(e => e.id === emergencyId ? data.emergency : e));
-    });
+      .then(res => res.json())
+      .then(data => {
+        if (data.emergency) setEmergencies(prev => prev.map(e => e.id === emergencyId ? data.emergency : e));
+      });
   };
 
   const handleRegisterBoatSubmit = (e) => {
@@ -421,14 +418,14 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(boatRegForm)
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.boat) {
-        setAllBoats(prev => [...prev, data.boat]);
-        setShowBoatRegModal(false);
-        setBoatRegForm({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: '' });
-      }
-    });
+      .then(res => res.json())
+      .then(data => {
+        if (data.boat) {
+          setAllBoats(prev => [...prev, data.boat]);
+          setShowBoatRegModal(false);
+          setBoatRegForm({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: '' });
+        }
+      });
   };
 
   // Dynamic Family ETA calculation
@@ -467,13 +464,13 @@ export default function SmartFishermenApp() {
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden font-sans">
-        
+
         {/* Background Decorative Rings */}
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6 relative z-10">
-          
+
           {/* Logo & Header */}
           <div className="text-center space-y-2">
             <div className="w-16 h-16 bg-cyan-600/20 text-cyan-400 rounded-2xl border border-cyan-500/30 flex items-center justify-center mx-auto shadow-lg">
@@ -559,11 +556,10 @@ export default function SmartFishermenApp() {
             <button
               type="submit"
               disabled={authenticating}
-              className={`w-full py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-white shadow-lg transition flex items-center justify-center space-x-2 ${
-                loginRole === 'fisherman' ? 'bg-cyan-600 hover:bg-cyan-500' :
-                loginRole === 'family' ? 'bg-emerald-600 hover:bg-emerald-500' :
-                loginRole === 'rescue' ? 'bg-red-600 hover:bg-red-500' : 'bg-purple-600 hover:bg-purple-500'
-              }`}
+              className={`w-full py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-white shadow-lg transition flex items-center justify-center space-x-2 ${loginRole === 'fisherman' ? 'bg-cyan-600 hover:bg-cyan-500' :
+                  loginRole === 'family' ? 'bg-emerald-600 hover:bg-emerald-500' :
+                    loginRole === 'rescue' ? 'bg-red-600 hover:bg-red-500' : 'bg-purple-600 hover:bg-purple-500'
+                }`}
             >
               <UserCheck className="w-4 h-4" />
               <span>{authenticating ? 'VERIFYING WITH DATABASE...' : `LOG IN TO ${loginRole.toUpperCase()} PORTAL`}</span>
@@ -651,7 +647,7 @@ export default function SmartFishermenApp() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      
+
       {/* Top Application Header */}
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
         <div className="flex items-center space-x-3">
@@ -732,7 +728,7 @@ export default function SmartFishermenApp() {
             {userRole === 'fisherman' && boat && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                  
+
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center space-x-2">
@@ -741,7 +737,7 @@ export default function SmartFishermenApp() {
                         <span className="bg-cyan-500/20 text-cyan-400 text-xs px-2.5 py-0.5 rounded-full border border-cyan-500/30 font-bold">{boat.status}</span>
                       </div>
                       <p className="text-xs text-slate-400 mt-1">Reg: <strong>{boat.registrationNumber}</strong> | Pos: ({boat.latitude?.toFixed(4)}° N, {boat.longitude?.toFixed(4)}° E)</p>
-                      
+
                       <div className="flex flex-wrap items-center gap-2 text-xs mt-2">
                         <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold flex items-center space-x-1">
                           <Zap className="w-3.5 h-3.5 text-emerald-400" />
@@ -799,7 +795,7 @@ export default function SmartFishermenApp() {
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[380px] relative overflow-hidden isolate shadow-xl">
                     <MapContainer center={[boat.latitude || 9.9312, boat.longitude || 76.2673]} zoom={11} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; OpenStreetMap & SFSRS' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                      
+
                       <Marker position={[boat.latitude || 9.9312, boat.longitude || 76.2673]} icon={boatIcon}>
                         <Popup><strong className="font-bold">{boat.name}</strong><br />Speed: {boat.speedKnots} kn</Popup>
                       </Marker>
@@ -886,9 +882,9 @@ export default function SmartFishermenApp() {
             {/* 2. FAMILY PORTAL VIEW */}
             {userRole === 'family' && boat && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+
                 <div className="lg:col-span-2 space-y-6">
-                  
+
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center space-x-4">
                       {captain?.avatar ? (
@@ -975,7 +971,7 @@ export default function SmartFishermenApp() {
                 </div>
 
                 <div className="space-y-6">
-                  
+
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
                     <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                       <h4 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center space-x-1.5">
@@ -1038,12 +1034,12 @@ export default function SmartFishermenApp() {
             {/* 3. COAST GUARD RESCUE VIEW */}
             {userRole === 'rescue' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+
                 <div className="lg:col-span-2 space-y-4">
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[460px] relative overflow-hidden isolate shadow-xl">
                     <MapContainer center={[9.8800, 76.1500]} zoom={9} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; Coast Guard MROC' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                      
+
                       {coastalDistricts.map(dist => (
                         <Marker key={dist.id} position={[dist.lat, dist.lon]} icon={harborMarker}>
                           <Popup>
@@ -1080,7 +1076,7 @@ export default function SmartFishermenApp() {
                         positions={driftPoints}
                         pathOptions={{ color: '#f59e0b', weight: 4, dashArray: '4, 8' }}
                       />
-                      
+
                       {driftPoints[1] && <Circle center={driftPoints[1]} radius={500} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15 }} />}
                       {driftPoints[2] && <Circle center={driftPoints[2]} radius={900} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.10 }} />}
                       {driftPoints[3] && <Circle center={driftPoints[3]} radius={1300} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.08 }} />}
@@ -1149,7 +1145,7 @@ export default function SmartFishermenApp() {
             {/* 4. GOVT ADMIN VIEW */}
             {userRole === 'admin' && (
               <div className="space-y-6">
-                
+
                 {/* Pending User Access Applications Panel */}
                 <div className="bg-slate-900 border border-amber-500/40 rounded-2xl p-5 space-y-4 shadow-xl">
                   <div className="flex justify-between items-center border-b border-amber-500/30 pb-3">
