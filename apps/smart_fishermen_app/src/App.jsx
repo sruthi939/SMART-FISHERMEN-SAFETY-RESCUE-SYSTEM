@@ -3,7 +3,8 @@ import {
   ShieldAlert, Anchor, Heart, Building2, Radio, Compass, Fuel, 
   Battery, AlertTriangle, MapPin, Users, Wind, Waves, CheckCircle2, 
   LifeBuoy, PhoneCall, Clock, Navigation, Plus, FileCheck, IndianRupee, 
-  RefreshCw, Camera, Mic, Cpu, Lock, ShieldCheck, Zap, Crosshair, Server, Database, Satellite, Layers, Map
+  RefreshCw, Camera, Mic, Cpu, Lock, ShieldCheck, Zap, Crosshair, Server, Database, Satellite, Layers, Map,
+  MessageSquare, Send, Stethoscope, TrendingUp, Bell, Check
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
@@ -60,6 +61,13 @@ export default function SmartFishermenApp() {
   const [imblWarning, setImblWarning] = useState(null);
   const [driftData, setDriftData] = useState(null);
 
+  // Family Feature State
+  const [familyChatMessages, setFamilyChatMessages] = useState([]);
+  const [chatInputText, setChatInputText] = useState('');
+  const [fishMarketRates, setFishMarketRates] = useState([]);
+  const [teleMedicineHotlines, setTeleMedicineHotlines] = useState([]);
+  const [showTeleMedModal, setShowTeleMedModal] = useState(false);
+
   // SOS state
   const [sosHolding, setSosHolding] = useState(false);
   const [sosProgress, setSosProgress] = useState(0);
@@ -115,6 +123,19 @@ export default function SmartFishermenApp() {
       .then(data => { if (data.coastalDistricts) setCoastalDistricts(data.coastalDistricts); })
       .catch(err => console.error(err));
 
+    fetch(`${BACKEND_URL}/api/family/messages/b-102`)
+      .then(res => res.json())
+      .then(data => { if (data.messages) setFamilyChatMessages(data.messages); })
+      .catch(err => console.error(err));
+
+    fetch(`${BACKEND_URL}/api/family/market-prices`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.marketPrices) setFishMarketRates(data.marketPrices);
+        if (data.teleMedicine) setTeleMedicineHotlines(data.teleMedicine);
+      })
+      .catch(err => console.error(err));
+
     fetch(`${BACKEND_URL}/api/admin/dashboard`)
       .then(res => res.json())
       .then(data => {
@@ -158,6 +179,12 @@ export default function SmartFishermenApp() {
     socket.on('wearable:mob', (data) => {
       if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]);
       if (data.crewMember) setCrew(prev => prev.map(c => c.id === data.crewMember.id ? { ...c, status: 'OVERBOARD' } : c));
+    });
+
+    socket.on('family:chat', (data) => {
+      if (data.message) {
+        setFamilyChatMessages(prev => [...prev, data.message]);
+      }
     });
 
     socket.on('rescue:update', (data) => {
@@ -221,6 +248,29 @@ export default function SmartFishermenApp() {
     .then(data => {
       setCrew(prev => prev.map(c => c.id === crewId ? { ...c, status: 'OVERBOARD' } : c));
       if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]);
+    });
+  };
+
+  const handleSendFamilyMessage = (e) => {
+    e.preventDefault();
+    if (!chatInputText.trim()) return;
+
+    fetch(`${BACKEND_URL}/api/family/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        boatId: boat?.id || 'b-102',
+        senderName: activeRole === 'family' ? 'Lakshmi (Wife)' : 'Ramesh (Captain)',
+        senderRole: activeRole === 'family' ? 'FAMILY' : 'FISHERMAN',
+        messageText: chatInputText
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.chatMessage) {
+        setFamilyChatMessages(prev => [...prev, data.chatMessage]);
+        setChatInputText('');
+      }
     });
   };
 
@@ -311,10 +361,10 @@ export default function SmartFishermenApp() {
             <h1 className="text-sm font-extrabold text-white tracking-wider uppercase flex items-center space-x-2">
               <span>SMART FISHERMEN SAFETY SYSTEM (SFSRS)</span>
               <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30 font-bold">
-                KERALA ALL 9 COASTAL DISTRICTS ACTIVE
+                FAMILY PORTAL ENHANCED
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400">Vizhinjam • Neendakara • Thottappally • Munambam • Chettuva • Ponnani • Beypore • Ayikkara • Kasaragod</p>
+            <p className="text-[11px] text-slate-400">Off-Grid Mesh Chat • Safe-Zone Geofencing • Live Fish Auction Rates • Marine Tele-Medicine</p>
           </div>
         </div>
 
@@ -326,7 +376,7 @@ export default function SmartFishermenApp() {
           </button>
           <button onClick={() => setActiveRole('family')} className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center space-x-1.5 ${activeRole === 'family' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
             <Heart className="w-3.5 h-3.5" />
-            <span>Family Portal</span>
+            <span>Family Portal (Full Suite)</span>
           </button>
           <button onClick={() => setActiveRole('rescue')} className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center space-x-1.5 ${activeRole === 'rescue' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
             <ShieldAlert className="w-3.5 h-3.5" />
@@ -334,7 +384,7 @@ export default function SmartFishermenApp() {
           </button>
           <button onClick={() => setActiveRole('admin')} className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center space-x-1.5 ${activeRole === 'admin' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
             <Building2 className="w-3.5 h-3.5" />
-            <span>Govt Admin (All Districts)</span>
+            <span>Govt Admin</span>
           </button>
         </div>
 
@@ -531,33 +581,159 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 2. FAMILY PORTAL VIEW */}
+            {/* 2. FAMILY PORTAL VIEW - ENHANCED FULL SUITE */}
             {activeRole === 'family' && boat && (
-              <div className="space-y-6">
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center space-x-4">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt={captain.name} className="w-16 h-16 rounded-full border-2 border-emerald-400 object-cover" />
-                    <div>
-                      <h3 className="text-lg font-extrabold text-white">{captain.name}</h3>
-                      <p className="text-xs text-slate-400">Vessel: {boat.name} ({boat.registrationNumber}) • {boat.homePort}</p>
-                      <p className="text-xs text-emerald-400 font-bold mt-1">Status: SAFE AT SEA • Multi-Bearer Live Syncing</p>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Left Column: Captain Overview, Dynamic ETA, Map & Messaging */}
+                <div className="lg:col-span-2 space-y-6">
+                  
+                  {/* Captain Header & Geofence Alert */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center space-x-4">
+                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt={captain.name} className="w-16 h-16 rounded-full border-2 border-emerald-400 object-cover" />
+                      <div>
+                        <h3 className="text-lg font-extrabold text-white">{captain.name}</h3>
+                        <p className="text-xs text-slate-400">Vessel: <strong>{boat.name} ({boat.registrationNumber})</strong> • {boat.homePort}</p>
+                        <p className="text-xs text-emerald-400 font-bold mt-1 flex items-center space-x-1">
+                          <Check className="w-3.5 h-3.5" />
+                          <span>SAFE AT SEA • Multi-Bearer Mesh Telemetry Active</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right text-xs bg-slate-950 p-3 rounded-xl border border-slate-800">
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">DYNAMIC RETURN ETA</span>
+                      <span className="text-base font-extrabold text-emerald-400">{hoursToPort} hrs to {boat.homePort}</span>
+                      <span className="text-[11px] text-slate-400 block mt-0.5">{distanceNM} NM offshore</span>
                     </div>
                   </div>
 
-                  <div className="text-right text-xs">
-                    <span className="text-slate-400 block text-[10px]">DYNAMIC CALCULATED RETURN ETA</span>
-                    <span className="text-base font-extrabold text-emerald-400">{hoursToPort} hrs to {boat.homePort} ({distanceNM} NM away)</span>
+                  {/* Geofence Status Badge */}
+                  <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between text-xs">
+                    <div className="flex items-center space-x-2">
+                      <Bell className="w-4 h-4 text-emerald-400" />
+                      <div>
+                        <span className="font-bold text-white">Safe-Zone Geofence Status: </span>
+                        <span className="text-emerald-400 font-bold">NORMAL DEEP SEA FISHING ZONE</span>
+                      </div>
+                    </div>
+                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2.5 py-0.5 rounded font-bold border border-emerald-500/30">SMS NOTIFICATIONS ACTIVE</span>
                   </div>
+
+                  {/* Peace-of-Mind Live Map */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[360px] relative overflow-hidden isolate shadow-xl">
+                    <MapContainer center={[boat.latitude || 9.9312, boat.longitude || 76.2673]} zoom={11} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
+                      <TileLayer attribution='&copy; OpenStreetMap & SFSRS' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <Marker position={[boat.latitude || 9.9312, boat.longitude || 76.2673]} icon={boatIcon}>
+                        <Popup><strong className="font-bold">{boat.name}</strong><br />Position: ({boat.latitude?.toFixed(4)}, {boat.longitude?.toFixed(4)})</Popup>
+                      </Marker>
+                    </MapContainer>
+                  </div>
+
+                  {/* 💬 Two-Way Off-Grid Family Mesh Chat Box */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <h4 className="font-extrabold text-sm text-white flex items-center space-x-2">
+                        <MessageSquare className="w-4 h-4 text-cyan-400" />
+                        <span>Two-Way Off-Grid Family Mesh Messaging</span>
+                      </h4>
+                      <span className="text-[10px] bg-slate-950 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">Relayed via LoRa Mesh Packet</span>
+                    </div>
+
+                    {/* Chat Messages Log */}
+                    <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                      {familyChatMessages.map(msg => (
+                        <div key={msg.id} className={`p-3 rounded-xl text-xs space-y-1 ${msg.senderRole === 'FAMILY' ? 'bg-cyan-950/50 border border-cyan-500/30 ml-6' : 'bg-slate-950 border border-slate-800 mr-6'}`}>
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-white">{msg.senderName}</span>
+                            <span className="text-[10px] text-slate-400">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                          </div>
+                          <p className="text-slate-200 leading-relaxed">{msg.messageText}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Send Message Form */}
+                    <form onSubmit={handleSendFamilyMessage} className="flex space-x-2 pt-1">
+                      <input
+                        type="text"
+                        value={chatInputText}
+                        onChange={e => setChatInputText(e.target.value)}
+                        placeholder="Type message to send to boat over mesh bearer..."
+                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                      />
+                      <button type="submit" className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-1">
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send</span>
+                      </button>
+                    </form>
+                  </div>
+
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[420px] relative overflow-hidden isolate shadow-xl">
-                  <MapContainer center={[boat.latitude || 9.9312, boat.longitude || 76.2673]} zoom={11} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
-                    <TileLayer attribution='&copy; OpenStreetMap & SFSRS' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <Marker position={[boat.latitude || 9.9312, boat.longitude || 76.2673]} icon={boatIcon}>
-                      <Popup><strong className="font-bold">{boat.name}</strong></Popup>
-                    </Marker>
-                  </MapContainer>
+                {/* Right Column: Fish Market Prices, Harbor Weather & Medical Hotline */}
+                <div className="space-y-6">
+                  
+                  {/* 💰 Live Fish Market Auction Prices */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                      <h4 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center space-x-1.5">
+                        <TrendingUp className="w-4 h-4 text-emerald-400" />
+                        <span>Live Kerala Harbor Fish Market Auction Rates</span>
+                      </h4>
+                    </div>
+
+                    <div className="space-y-2">
+                      {fishMarketRates.map(m => (
+                        <div key={m.id} className="p-2.5 bg-slate-950 rounded-xl flex items-center justify-between text-xs border border-slate-800/80">
+                          <div>
+                            <p className="font-bold text-white">{m.fishName}</p>
+                            <p className="text-[10px] text-slate-400">{m.harbor}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-extrabold text-emerald-400 text-sm">₹{m.priceINRPerKg} / kg</span>
+                            <span className="text-[10px] text-emerald-300 block font-bold">▲ Market High</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 🩺 Marine Tele-Medicine Emergency Guidance Hotline */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                    <h4 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center space-x-1.5">
+                      <Stethoscope className="w-4 h-4 text-purple-400" />
+                      <span>24x7 Marine Tele-Medicine Medical Hotline</span>
+                    </h4>
+
+                    {teleMedicineHotlines.map(h => (
+                      <div key={h.id} className="p-3 bg-purple-950/30 border border-purple-500/30 rounded-xl text-xs space-y-1">
+                        <p className="font-bold text-white">{h.title}</p>
+                        <p className="text-purple-300 font-extrabold text-sm">{h.contactPhone}</p>
+                        <span className="text-[10px] text-emerald-400 font-bold block">● {h.available}</span>
+                      </div>
+                    ))}
+
+                    <button
+                      onClick={() => setShowTeleMedModal(true)}
+                      className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 rounded-xl text-xs shadow-lg shadow-purple-900/40"
+                    >
+                      Open First-Aid Medical Guidance
+                    </button>
+                  </div>
+
+                  {/* 📞 Direct Coast Guard MRCC Call */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-center space-y-3">
+                    <span className="text-xs font-bold uppercase text-slate-400">Coast Guard MRCC Direct Hotline</span>
+                    <a href="tel:1554" className="block bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl text-sm uppercase tracking-wider shadow-lg shadow-red-900/40 flex items-center justify-center space-x-2">
+                      <PhoneCall className="w-4 h-4" />
+                      <span>CALL MRCC 1554 EMERGENCY</span>
+                    </a>
+                  </div>
+
                 </div>
+
               </div>
             )}
 
@@ -570,7 +746,6 @@ export default function SmartFishermenApp() {
                     <MapContainer center={[9.8800, 76.1500]} zoom={9} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; Coast Guard MROC' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                       
-                      {/* Kerala All 9 Coastal District Harbor Markers */}
                       {coastalDistricts.map(dist => (
                         <Marker key={dist.id} position={[dist.lat, dist.lon]} icon={harborMarker}>
                           <Popup>
@@ -581,33 +756,28 @@ export default function SmartFishermenApp() {
                         </Marker>
                       ))}
 
-                      {/* Active Boats */}
                       {allBoats.map(b => (
                         <Marker key={b.id} position={[b.latitude || 9.9312, b.longitude || 76.2673]} icon={boatIcon}>
                           <Popup><strong className="font-bold">{b.name}</strong> ({b.registrationNumber})</Popup>
                         </Marker>
                       ))}
 
-                      {/* Active Emergencies */}
                       {emergencies.map(e => (
                         <Marker key={e.id} position={[e.latitude, e.longitude]} icon={emergencyMarker}>
                           <Popup><strong className="font-bold text-red-600">{e.emergencyType}</strong><br />{e.description}</Popup>
                         </Marker>
                       ))}
 
-                      {/* Autonomous SAR Drone */}
                       <Marker position={[9.8750, 76.1400]} icon={droneIcon}>
                         <Popup><strong className="font-bold text-purple-400">CG-Drone-Alpha (Thermal IR SAR Drone)</strong></Popup>
                       </Marker>
 
-                      {/* Coast Guard Patrol Vessels */}
                       {rescueUnits.map(ru => (
                         <Marker key={ru.id} position={[ru.latitude, ru.longitude]} icon={rescueUnitIcon}>
                           <Popup><strong className="font-bold text-emerald-600">{ru.unitName}</strong></Popup>
                         </Marker>
                       ))}
 
-                      {/* AI MOB Drift Trajectory Vectors */}
                       <Polyline
                         positions={driftPoints}
                         pathOptions={{ color: '#f59e0b', weight: 4, dashArray: '4, 8' }}
@@ -678,11 +848,10 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 4. GOVT ADMIN VIEW - ALL 9 KERALA COASTAL DISTRICTS SEASHORE REGISTRY */}
+            {/* 4. GOVT ADMIN VIEW */}
             {activeRole === 'admin' && (
               <div className="space-y-6">
                 
-                {/* Stats Header */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
                     <span className="text-slate-400 text-xs font-bold">ALL KERALA COASTAL DISTRICTS</span>
@@ -731,7 +900,7 @@ export default function SmartFishermenApp() {
                   </div>
                 </div>
 
-                {/* Kerala 9 Coastal Districts Seashore Registry Table */}
+                {/* Kerala Seashore Directory */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                   <div className="p-5 border-b border-slate-800 flex justify-between items-center">
                     <h3 className="text-xs font-extrabold uppercase text-white tracking-wider flex items-center space-x-2">
@@ -788,56 +957,42 @@ export default function SmartFishermenApp() {
                   </div>
                 </div>
 
-                {/* Individual Registered Boat Registry */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-                  <div className="p-5 border-b border-slate-800">
-                    <h3 className="text-xs font-extrabold uppercase text-white tracking-wider flex items-center space-x-2">
-                      <Lock className="w-4 h-4 text-purple-400" />
-                      <span>Registered Fishing Vessels & Cryptographic Blockchain Audit Ledger</span>
-                    </h3>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs text-slate-300">
-                      <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
-                        <tr>
-                          <th className="p-4">Reg Number</th>
-                          <th className="p-4">Vessel Name</th>
-                          <th className="p-4">Type</th>
-                          <th className="p-4">Home Port</th>
-                          <th className="p-4">License Status</th>
-                          <th className="p-4">Cryptographic Blockchain Hash</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/60">
-                        {allBoats.map(b => (
-                          <tr key={b.id} className="hover:bg-slate-800/40 transition">
-                            <td className="p-4 font-bold text-white">{b.registrationNumber}</td>
-                            <td className="p-4 font-semibold text-cyan-300">{b.name}</td>
-                            <td className="p-4">{b.boatType || 'Deep Sea Trawler'}</td>
-                            <td className="p-4">{b.homePort}</td>
-                            <td className="p-4">
-                              <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">ACTIVE</span>
-                            </td>
-                            <td className="p-4">
-                              <span className="font-mono text-[10px] bg-slate-950 px-2 py-1 rounded border border-purple-500/30 text-purple-300 flex items-center space-x-1">
-                                <ShieldCheck className="w-3 h-3 text-purple-400 flex-shrink-0" />
-                                <span>{b.blockchainTxHash ? `${b.blockchainTxHash.slice(0, 18)}...` : '0x8f23a9b1c74d8120e3...'}</span>
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
               </div>
             )}
           </>
         )}
 
       </div>
+
+      {/* Tele-Medicine First-Aid Modal */}
+      {showTeleMedModal && (
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-slate-900 border border-purple-500/40 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-purple-500/30 pb-3">
+              <h3 className="font-extrabold text-sm text-white flex items-center space-x-2">
+                <Stethoscope className="w-5 h-5 text-purple-400" />
+                <span>Marine First-Aid & Tele-Medicine Protocol</span>
+              </h3>
+              <button onClick={() => setShowTeleMedModal(false)} className="text-slate-400 hover:text-white font-bold text-xs">Close</button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                <p className="font-bold text-cyan-300">1. Man Overboard Hypothermia Care</p>
+                <p className="text-slate-300">Wrap victim in warm dry blankets. Do NOT rub skin vigorously. Offer warm fluids if conscious.</p>
+              </div>
+              <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                <p className="font-bold text-cyan-300">2. Deep Sea Hook / Cut Injury</p>
+                <p className="text-slate-300">Apply continuous pressure with sterile gauze. Elevate wound above heart. Clean with antiseptics.</p>
+              </div>
+              <div className="p-3 bg-purple-950/40 border border-purple-500/40 rounded-xl">
+                <p className="font-bold text-white">Call Emergency Naval Doctor</p>
+                <p className="text-purple-300 font-extrabold text-sm mt-0.5">+91 484 2872100</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Autonomous Thermal IR SAR Drone Camera HUD Modal */}
       {showDroneHUD && (
