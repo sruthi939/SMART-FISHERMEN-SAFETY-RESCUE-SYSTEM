@@ -211,12 +211,23 @@ const initialData = {
     },
     {
       id: 'ru-02',
-      unitName: 'CG-Copter-03 (Sea King)',
+      unitName: 'CG-Copter-03 (Sea King Helicopter)',
       unitType: 'HELICOPTER',
       baseStation: 'INS Garuda Naval Air Station',
       latitude: 9.9500,
       longitude: 76.2700,
       status: 'STANDBY',
+      currentEmergencyId: null
+    },
+    {
+      id: 'ru-03',
+      unitName: 'CG-Drone-Alpha (Autonomous Thermal IR SAR Drone)',
+      unitType: 'DRONE_SAR',
+      baseStation: 'Coast Guard District HQ No. 4, Kochi',
+      latitude: 9.8900,
+      longitude: 76.2100,
+      status: 'STANDBY',
+      cameraFeedUrl: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=600',
       currentEmergencyId: null
     }
   ],
@@ -240,7 +251,8 @@ const initialData = {
       subsidyStatus: 'APPROVED',
       subsidyAmountINR: 45000,
       safetyInspectionDate: '2026-01-15',
-      complianceScore: 98
+      complianceScore: 98,
+      blockchainTxHash: '0x8f23a9b1c74d8120e3a45f9921b7c8e90a12f3456789abcd0123ef4567890abc'
     },
     {
       id: 'gov-105',
@@ -248,7 +260,8 @@ const initialData = {
       subsidyStatus: 'APPROVED',
       subsidyAmountINR: 40000,
       safetyInspectionDate: '2026-02-10',
-      complianceScore: 92
+      complianceScore: 92,
+      blockchainTxHash: '0x4e12c8d7b3a95012f45e67890a12b3456789cdef0123456789abcdef01234567'
     }
   ]
 };

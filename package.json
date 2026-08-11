@@ -11,17 +11,16 @@
     "clean:apps": "node database/cleanup.js",
     "install:all": "node database/cleanup.js && npm install && npm --prefix backend install && npm --prefix apps/smart_fishermen_app install",
     "seed": "node database/seed.js",
-    "start:backend": "node database/cleanup.js && node backend/src/server.js",
+    "start:backend": "node database/cleanup.js && npm --prefix backend install && node backend/src/server.js",
     "start:simulator": "node iot/boat-device/telemetry_simulator.js",
-    "dev:app": "npm --prefix apps/smart_fishermen_app run dev"
+    "dev:app": "npm --prefix apps/smart_fishermen_app install && npm --prefix apps/smart_fishermen_app run dev"
   },
   "keywords": [
     "maritime-safety",
     "iot",
     "gps",
     "ai-risk-prediction",
-    "fisherman-rescue",
-    "flutter-app"
+    "fisherman-rescue"
   ],
   "author": "Antigravity AI",
   "license": "MIT"
