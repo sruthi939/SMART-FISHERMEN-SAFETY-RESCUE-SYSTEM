@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  ShieldAlert, Anchor, Heart, Building2, Radio, AlertTriangle, MapPin, LifeBuoy, PhoneCall, Plus, RefreshCw, Camera, Mic,
-  Lock, ShieldCheck, Zap, Crosshair, Satellite, Map, MessageSquare,
-  Send, Stethoscope, TrendingUp, Bell, Check, LogOut, UserCheck,
-  KeyRound, Mail, UserPlus, CheckCircle
+import { 
+  ShieldAlert, Anchor, Heart, Building2, Radio, AlertTriangle, 
+  MapPin, LifeBuoy, PhoneCall, Plus, RefreshCw, Camera, Mic, 
+  Lock, ShieldCheck, Zap, Crosshair, Satellite, Map, MessageSquare, 
+  Send, Stethoscope, TrendingUp, Bell, Check, LogOut, UserCheck, 
+  KeyRound, Mail, UserPlus, CheckCircle, Eye, EyeOff, Shield, Phone, Home, FileText, User
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
@@ -44,7 +45,9 @@ const harborMarker = new L.DivIcon({
 
 export default function SmartFishermenApp() {
   // Real API Authentication & Access Control State
-  const [currentUser, setCurrentUser] = useState(null); // null = Login Screen
+  const [currentUser, setCurrentUser] = useState(null); // null = Login or Register Screen
+  const [authView, setAuthView] = useState('login'); // 'login' or 'register'
+  
   const [dbUsers, setDbUsers] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [loginRole, setLoginRole] = useState('fisherman');
@@ -53,9 +56,20 @@ export default function SmartFishermenApp() {
   const [authError, setAuthError] = useState(null);
   const [authenticating, setAuthenticating] = useState(false);
 
-  // Registration Modal State
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [regForm, setRegForm] = useState({ name: '', email: '', phone: '', aadhaarNumber: '', password: '', role: 'fisherman' });
+  // Toggle Password Visibility State for Registration Forms
+  const [showPasswords, setShowPasswords] = useState({
+    fishPass: false, fishConf: false,
+    famPass: false, famConf: false,
+    rescPass: false, rescConf: false,
+    admPass: false, admConf: false
+  });
+
+  // Individual Portal Registration Form States
+  const [fishReg, setFishReg] = useState({ name: '', phone: '', email: '', aadhaarNumber: '', experienceYears: '1-5 Years', state: 'Kerala', district: 'Ernakulam', password: '', confirmPassword: '' });
+  const [famReg, setFamReg] = useState({ name: '', phone: '', email: '', relationship: 'Wife', fishermanPhone: '', address: '', password: '', confirmPassword: '' });
+  const [rescReg, setRescReg] = useState({ name: '', phone: '', email: '', department: 'Indian Coast Guard (ICG)', designation: 'Commandant', employeeId: '', stationUnit: 'ICGS HQ 4 Kochi', password: '', confirmPassword: '' });
+  const [admReg, setAdmReg] = useState({ name: '', phone: '', email: '', department: 'Department of Fisheries Kerala', designation: 'District Fisheries Officer', employeeId: '', password: '', confirmPassword: '' });
+  
   const [regSuccessMsg, setRegSuccessMsg] = useState(null);
 
   const [connected, setConnected] = useState(false);
@@ -126,50 +140,54 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: loginEmail, password: loginPassword, role: loginRole })
     })
-      .then(async res => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Authentication failed.');
-        return data;
-      })
-      .then(data => {
-        if (data.user) {
-          if (data.token) localStorage.setItem('sfsrs_token', data.token);
-          setCurrentUser(data.user);
-        }
-        setAuthenticating(false);
-      })
-      .catch(err => {
-        setAuthError(err.message || 'Login failed');
-        setAuthenticating(false);
-      });
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Authentication failed.');
+      return data;
+    })
+    .then(data => {
+      if (data.user) {
+        if (data.token) localStorage.setItem('sfsrs_token', data.token);
+        setCurrentUser(data.user);
+      }
+      setAuthenticating(false);
+    })
+    .catch(err => {
+      setAuthError(err.message || 'Login failed');
+      setAuthenticating(false);
+    });
   };
 
-  // Handle User Registration Submission (POST /api/auth/register)
-  const handleUserRegistrationSubmit = (e) => {
+  // Unified Registration Submission Handler (POST /api/auth/register)
+  const handleCardRegistrationSubmit = (e, formData, targetRole) => {
     e.preventDefault();
+    if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+      alert('Password and Confirm Password do not match!');
+      return;
+    }
+
     setRegSuccessMsg(null);
     setAuthError(null);
 
     fetch(`${BACKEND_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(regForm)
+      body: JSON.stringify({ ...formData, role: targetRole })
     })
-      .then(async res => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Registration failed');
-        return data;
-      })
-      .then(data => {
-        setRegSuccessMsg(data.message);
-        fetchUsersAndPending();
-        setTimeout(() => {
-          setShowRegisterModal(false);
-          setRegSuccessMsg(null);
-          setRegForm({ name: '', email: '', phone: '', aadhaarNumber: '', password: '', role: 'fisherman' });
-        }, 3500);
-      })
-      .catch(err => setAuthError(err.message));
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      return data;
+    })
+    .then(data => {
+      setRegSuccessMsg(data.message);
+      fetchUsersAndPending();
+      setTimeout(() => {
+        setAuthView('login');
+        setRegSuccessMsg(null);
+      }, 3500);
+    })
+    .catch(err => alert(err.message));
   };
 
   // Admin Approve or Reject Access Request
@@ -179,10 +197,10 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: targetStatus })
     })
-      .then(res => res.json())
-      .then(() => {
-        fetchUsersAndPending();
-      });
+    .then(res => res.json())
+    .then(() => {
+      fetchUsersAndPending();
+    });
   };
 
   const handleLogout = () => {
@@ -190,6 +208,7 @@ export default function SmartFishermenApp() {
     setCurrentUser(null);
     setLoginEmail('');
     setLoginPassword('');
+    setAuthView('login');
   };
 
   // Fetch initial backend data
@@ -327,7 +346,7 @@ export default function SmartFishermenApp() {
     if (!boat) return;
     setSosActive(true);
     setSosProgress(100);
-    const desc = voiceLang
+    const desc = voiceLang 
       ? `Voice-Activated SOS distress trigger in ${voiceLang} aboard ${boat.name} (${boat.registrationNumber}).`
       : `Mayday SOS button pressed aboard ${boat.name} (${boat.registrationNumber}).`;
 
@@ -336,8 +355,8 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ boatId: boat.id, latitude: boat.latitude, longitude: boat.longitude, description: desc })
     })
-      .then(res => res.json())
-      .then(data => { if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]); });
+    .then(res => res.json())
+    .then(data => { if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]); });
   };
 
   const triggerMOB = (crewId) => {
@@ -354,11 +373,11 @@ export default function SmartFishermenApp() {
         longitude: boat.longitude
       })
     })
-      .then(res => res.json())
-      .then(data => {
-        setCrew(prev => prev.map(c => c.id === crewId ? { ...c, status: 'OVERBOARD' } : c));
-        if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]);
-      });
+    .then(res => res.json())
+    .then(data => {
+      setCrew(prev => prev.map(c => c.id === crewId ? { ...c, status: 'OVERBOARD' } : c));
+      if (data.emergency) setEmergencies(prev => [data.emergency, ...prev]);
+    });
   };
 
   const handleSendFamilyMessage = (e) => {
@@ -375,13 +394,13 @@ export default function SmartFishermenApp() {
         messageText: chatInputText
       })
     })
-      .then(res => res.json())
-      .then(data => {
-        if (data.chatMessage) {
-          setFamilyChatMessages(prev => [...prev, data.chatMessage]);
-          setChatInputText('');
-        }
-      });
+    .then(res => res.json())
+    .then(data => {
+      if (data.chatMessage) {
+        setFamilyChatMessages(prev => [...prev, data.chatMessage]);
+        setChatInputText('');
+      }
+    });
   };
 
   const handleDispatch = (emergencyId, unitType = 'PATROL') => {
@@ -390,13 +409,13 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ emergencyId })
     })
-      .then(res => res.json())
-      .then(data => {
-        if (data.result && data.result.emergency) {
-          setEmergencies(prev => prev.map(e => e.id === emergencyId ? data.result.emergency : e));
-        }
-        if (unitType === 'DRONE') setShowDroneHUD(true);
-      });
+    .then(res => res.json())
+    .then(data => {
+      if (data.result && data.result.emergency) {
+        setEmergencies(prev => prev.map(e => e.id === emergencyId ? data.result.emergency : e));
+      }
+      if (unitType === 'DRONE') setShowDroneHUD(true);
+    });
   };
 
   const handleResolve = (emergencyId) => {
@@ -405,10 +424,10 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ resolutionNotes: 'Victim safely recovered by Coast Guard Patrol Vessel & SAR Drone.' })
     })
-      .then(res => res.json())
-      .then(data => {
-        if (data.emergency) setEmergencies(prev => prev.map(e => e.id === emergencyId ? data.emergency : e));
-      });
+    .then(res => res.json())
+    .then(data => {
+      if (data.emergency) setEmergencies(prev => prev.map(e => e.id === emergencyId ? data.emergency : e));
+    });
   };
 
   const handleRegisterBoatSubmit = (e) => {
@@ -418,14 +437,14 @@ export default function SmartFishermenApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(boatRegForm)
     })
-      .then(res => res.json())
-      .then(data => {
-        if (data.boat) {
-          setAllBoats(prev => [...prev, data.boat]);
-          setShowBoatRegModal(false);
-          setBoatRegForm({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: '' });
-        }
-      });
+    .then(res => res.json())
+    .then(data => {
+      if (data.boat) {
+        setAllBoats(prev => [...prev, data.boat]);
+        setShowBoatRegModal(false);
+        setBoatRegForm({ name: '', registrationNumber: '', boatType: 'Deep Sea Trawler', homePort: '' });
+      }
+    });
   };
 
   // Dynamic Family ETA calculation
@@ -459,18 +478,18 @@ export default function SmartFishermenApp() {
     : coastalDistricts.filter(d => d.code === selectedDistrict || d.districtName.toUpperCase().includes(selectedDistrict.toUpperCase()));
 
   // =========================================================================
-  // 1. AUTHENTIC API LOGIN & REGISTRATION SCREEN (WHEN CURRENTUSER IS NULL)
+  // 1. AUTHENTIC API LOGIN SCREEN (WHEN CURRENTUSER IS NULL AND AUTHVIEW IS 'LOGIN')
   // =========================================================================
-  if (!currentUser) {
+  if (!currentUser && authView === 'login') {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden font-sans">
-
+        
         {/* Background Decorative Rings */}
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6 relative z-10">
-
+          
           {/* Logo & Header */}
           <div className="text-center space-y-2">
             <div className="w-16 h-16 bg-cyan-600/20 text-cyan-400 rounded-2xl border border-cyan-500/30 flex items-center justify-center mx-auto shadow-lg">
@@ -556,98 +575,443 @@ export default function SmartFishermenApp() {
             <button
               type="submit"
               disabled={authenticating}
-              className={`w-full py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-white shadow-lg transition flex items-center justify-center space-x-2 ${loginRole === 'fisherman' ? 'bg-cyan-600 hover:bg-cyan-500' :
-                  loginRole === 'family' ? 'bg-emerald-600 hover:bg-emerald-500' :
-                    loginRole === 'rescue' ? 'bg-red-600 hover:bg-red-500' : 'bg-purple-600 hover:bg-purple-500'
-                }`}
+              className={`w-full py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-white shadow-lg transition flex items-center justify-center space-x-2 ${
+                loginRole === 'fisherman' ? 'bg-cyan-600 hover:bg-cyan-500' :
+                loginRole === 'family' ? 'bg-emerald-600 hover:bg-emerald-500' :
+                loginRole === 'rescue' ? 'bg-red-600 hover:bg-red-500' : 'bg-purple-600 hover:bg-purple-500'
+              }`}
             >
               <UserCheck className="w-4 h-4" />
               <span>{authenticating ? 'VERIFYING WITH DATABASE...' : `LOG IN TO ${loginRole.toUpperCase()} PORTAL`}</span>
             </button>
           </form>
 
-          {/* New Portal Access Registration Request Button */}
+          {/* Switch to 4-Card Registration View */}
           <div className="pt-3 border-t border-slate-800 text-center space-y-3">
             <button
-              onClick={() => { setShowRegisterModal(true); setAuthError(null); }}
+              onClick={() => { setAuthView('register'); setAuthError(null); }}
               className="w-full bg-slate-950 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 font-bold p-3 rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-md"
             >
               <UserPlus className="w-4 h-4 text-cyan-400" />
-              <span>Request New Portal Access Registration</span>
+              <span>Don't have an account? Create Your Account</span>
             </button>
           </div>
 
         </div>
+      </div>
+    );
+  }
 
-        {/* Portal Access Registration Modal */}
-        {showRegisterModal && (
-          <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
-            <div className="bg-slate-900 border border-cyan-500/40 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 className="font-extrabold text-sm text-white flex items-center space-x-2">
-                  <UserPlus className="w-5 h-5 text-cyan-400" />
-                  <span>Portal Access Registration Application</span>
-                </h3>
-                <button onClick={() => setShowRegisterModal(false)} className="text-slate-400 hover:text-white font-bold text-xs">Close</button>
-              </div>
+  // =========================================================================
+  // 2. 4-CARD REGISTRATION PAGE VIEW (EXACT MATCHING DESIGN FROM SCREENSHOT)
+  // =========================================================================
+  if (!currentUser && authView === 'register') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans relative">
+        
+        {/* Top Registration Header */}
+        <header className="bg-slate-900/90 border-b border-slate-800 px-8 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 backdrop-blur-md">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-cyan-600/20 text-cyan-400 rounded-xl border border-cyan-500/30">
+              <Anchor className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xs font-extrabold text-white tracking-wider uppercase">SMART FISHERMEN</h1>
+              <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">SAFETY & RESCUE SYSTEM</p>
+            </div>
+          </div>
 
-              {regSuccessMsg ? (
-                <div className="bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 p-4 rounded-xl text-xs font-bold text-center leading-relaxed">
-                  <CheckCircle className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
-                  {regSuccessMsg}
-                </div>
-              ) : (
-                <form onSubmit={handleUserRegistrationSubmit} className="space-y-3 text-xs">
-                  <div>
-                    <label className="text-slate-400 block mb-1">Full Name</label>
-                    <input type="text" required value={regForm.name} onChange={e => setRegForm({ ...regForm, name: e.target.value })} placeholder="Enter full name..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">Email Address</label>
-                    <input type="email" required value={regForm.email} onChange={e => setRegForm({ ...regForm, email: e.target.value })} placeholder="Enter email address..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">Phone Number</label>
-                    <input type="text" required value={regForm.phone} onChange={e => setRegForm({ ...regForm, phone: e.target.value })} placeholder="Enter phone number..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">Aadhaar / Marine License ID</label>
-                    <input type="text" required value={regForm.aadhaarNumber} onChange={e => setRegForm({ ...regForm, aadhaarNumber: e.target.value })} placeholder="Enter ID number..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">Password</label>
-                    <input type="password" required value={regForm.password} onChange={e => setRegForm({ ...regForm, password: e.target.value })} placeholder="Create password..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">Requested Portal Role</label>
-                    <select value={regForm.role} onChange={e => setRegForm({ ...regForm, role: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-bold">
-                      <option value="fisherman">Fisherman Vessel Portal</option>
-                      <option value="family">Family Care Portal</option>
-                      <option value="rescue">Coast Guard Rescue Portal</option>
-                    </select>
-                  </div>
-                  <div className="flex justify-end space-x-2 pt-2">
-                    <button type="button" onClick={() => setShowRegisterModal(false)} className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl">Cancel</button>
-                    <button type="submit" className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl shadow-lg">Submit Application</button>
-                  </div>
-                </form>
-              )}
+          <div className="text-center">
+            <h2 className="text-2xl font-extrabold text-white">Create Your Account</h2>
+            <p className="text-xs text-slate-400">Join our network to stay safe and connected</p>
+          </div>
+
+          <div className="flex items-center space-x-3 text-xs">
+            <span className="text-slate-400 flex items-center space-x-1">
+              <Lock className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Already have an account?</span>
+            </span>
+            <button
+              onClick={() => setAuthView('login')}
+              className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-5 py-2 rounded-xl transition shadow-lg shadow-purple-900/40"
+            >
+              Login
+            </button>
+          </div>
+        </header>
+
+        {regSuccessMsg && (
+          <div className="max-w-7xl mx-auto w-full px-6 pt-4">
+            <div className="bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 p-4 rounded-2xl text-xs font-bold text-center leading-relaxed shadow-xl animate-bounce">
+              <CheckCircle className="w-6 h-6 text-emerald-400 mx-auto mb-1" />
+              {regSuccessMsg}
             </div>
           </div>
         )}
+
+        {/* 4 Cards Grid Section */}
+        <main className="max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
+          
+          {/* CARD 1: Fisherman Registration (Blue Glow Theme) */}
+          <div className="bg-slate-900/90 border border-cyan-500/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between hover:border-cyan-500 transition">
+            <div>
+              <div className="w-14 h-14 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                <Anchor className="w-7 h-7" />
+              </div>
+              
+              <h3 className="text-xl font-extrabold text-cyan-400">Fisherman Registration</h3>
+              <p className="text-xs text-slate-400 mt-1 mb-6 leading-relaxed">
+                Register as a Fisherman to access boat tracking, weather updates and emergency alerts
+              </p>
+
+              <form onSubmit={e => handleCardRegistrationSubmit(e, fishReg, 'fisherman')} className="space-y-3.5 text-xs">
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={fishReg.name} onChange={e => setFishReg({ ...fishReg, name: e.target.value })} placeholder="Full Name" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={fishReg.phone} onChange={e => setFishReg({ ...fishReg, phone: e.target.value })} placeholder="Mobile Number" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="email" required value={fishReg.email} onChange={e => setFishReg({ ...fishReg, email: e.target.value })} placeholder="Email Address" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <FileText className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={fishReg.aadhaarNumber} onChange={e => setFishReg({ ...fishReg, aadhaarNumber: e.target.value })} placeholder="Aadhaar Number" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <select value={fishReg.experienceYears} onChange={e => setFishReg({ ...fishReg, experienceYears: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:border-cyan-500 focus:outline-none font-semibold">
+                    <option value="1-5 Years">Fishing Experience (1-5 Years)</option>
+                    <option value="5-10 Years">Fishing Experience (5-10 Years)</option>
+                    <option value="10+ Years">Fishing Experience (10+ Years)</option>
+                  </select>
+                </div>
+
+                <div className="relative">
+                  <select value={fishReg.state} onChange={e => setFishReg({ ...fishReg, state: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:border-cyan-500 focus:outline-none font-semibold">
+                    <option value="Kerala">Kerala State</option>
+                    <option value="Tamil Nadu">Tamil Nadu State</option>
+                    <option value="Karnataka">Karnataka State</option>
+                  </select>
+                </div>
+
+                <div className="relative">
+                  <select value={fishReg.district} onChange={e => setFishReg({ ...fishReg, district: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:border-cyan-500 focus:outline-none font-semibold">
+                    {coastalDistricts.map(d => (
+                      <option key={d.id} value={d.districtName}>{d.districtName} District ({d.code})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type={showPasswords.fishPass ? 'text' : 'password'} required value={fishReg.password} onChange={e => setFishReg({ ...fishReg, password: e.target.value })} placeholder="Password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none" />
+                  <button type="button" onClick={() => setShowPasswords({ ...showPasswords, fishPass: !showPasswords.fishPass })} className="absolute right-3 top-3 text-slate-500 hover:text-white">
+                    {showPasswords.fishPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type={showPasswords.fishConf ? 'text' : 'password'} required value={fishReg.confirmPassword} onChange={e => setFishReg({ ...fishReg, confirmPassword: e.target.value })} placeholder="Confirm Password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none" />
+                  <button type="button" onClick={() => setShowPasswords({ ...showPasswords, fishConf: !showPasswords.fishConf })} className="absolute right-3 top-3 text-slate-500 hover:text-white">
+                    {showPasswords.fishConf ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-blue-900/40 transition flex items-center justify-center space-x-2 mt-4">
+                  <UserPlus className="w-4 h-4" />
+                  <span>Register</span>
+                </button>
+              </form>
+            </div>
+            
+            <p className="text-[10px] text-slate-500 text-center mt-4">
+              By registering, you agree to our <a href="#" className="text-cyan-400 underline">Terms & Conditions</a> and <a href="#" className="text-cyan-400 underline">Privacy Policy</a>
+            </p>
+          </div>
+
+          {/* CARD 2: Family Member Registration (Green Glow Theme) */}
+          <div className="bg-slate-900/90 border border-emerald-500/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between hover:border-emerald-500 transition">
+            <div>
+              <div className="w-14 h-14 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                <Heart className="w-7 h-7" />
+              </div>
+              
+              <h3 className="text-xl font-extrabold text-emerald-400">Family Member Registration</h3>
+              <p className="text-xs text-slate-400 mt-1 mb-6 leading-relaxed">
+                Register as a Family Member to track your loved ones and receive important updates
+              </p>
+
+              <form onSubmit={e => handleCardRegistrationSubmit(e, famReg, 'family')} className="space-y-3.5 text-xs">
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={famReg.name} onChange={e => setFamReg({ ...famReg, name: e.target.value })} placeholder="Full Name" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={famReg.phone} onChange={e => setFamReg({ ...famReg, phone: e.target.value })} placeholder="Mobile Number" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="email" required value={famReg.email} onChange={e => setFamReg({ ...famReg, email: e.target.value })} placeholder="Email Address" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <select value={famReg.relationship} onChange={e => setFamReg({ ...famReg, relationship: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none font-semibold">
+                    <option value="Wife">Relationship with Fisherman (Wife)</option>
+                    <option value="Parent">Relationship with Fisherman (Parent)</option>
+                    <option value="Son/Daughter">Relationship with Fisherman (Son / Daughter)</option>
+                    <option value="Sibling">Relationship with Fisherman (Sibling)</option>
+                  </select>
+                </div>
+
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={famReg.fishermanPhone} onChange={e => setFamReg({ ...famReg, fishermanPhone: e.target.value })} placeholder="Fisherman Mobile Number" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Home className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={famReg.address} onChange={e => setFamReg({ ...famReg, address: e.target.value })} placeholder="Address" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type={showPasswords.famPass ? 'text' : 'password'} required value={famReg.password} onChange={e => setFamReg({ ...famReg, password: e.target.value })} placeholder="Password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none" />
+                  <button type="button" onClick={() => setShowPasswords({ ...showPasswords, famPass: !showPasswords.famPass })} className="absolute right-3 top-3 text-slate-500 hover:text-white">
+                    {showPasswords.famPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type={showPasswords.famConf ? 'text' : 'password'} required value={famReg.confirmPassword} onChange={e => setFamReg({ ...famReg, confirmPassword: e.target.value })} placeholder="Confirm Password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none" />
+                  <button type="button" onClick={() => setShowPasswords({ ...showPasswords, famConf: !showPasswords.famConf })} className="absolute right-3 top-3 text-slate-500 hover:text-white">
+                    {showPasswords.famConf ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-900/40 transition flex items-center justify-center space-x-2 mt-4">
+                  <UserPlus className="w-4 h-4" />
+                  <span>Register</span>
+                </button>
+              </form>
+            </div>
+
+            <p className="text-[10px] text-slate-500 text-center mt-4">
+              By registering, you agree to our <a href="#" className="text-emerald-400 underline">Terms & Conditions</a> and <a href="#" className="text-emerald-400 underline">Privacy Policy</a>
+            </p>
+          </div>
+
+          {/* CARD 3: Rescue Officer Registration (Orange Glow Theme) */}
+          <div className="bg-slate-900/90 border border-amber-500/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between hover:border-amber-500 transition">
+            <div>
+              <div className="w-14 h-14 bg-amber-600/20 text-amber-400 border border-amber-500/30 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                <ShieldAlert className="w-7 h-7" />
+              </div>
+              
+              <h3 className="text-xl font-extrabold text-amber-400">Rescue Officer Registration</h3>
+              <p className="text-xs text-slate-400 mt-1 mb-6 leading-relaxed">
+                Register as a Rescue Officer to manage emergencies and coordinate rescue operations
+              </p>
+
+              <form onSubmit={e => handleCardRegistrationSubmit(e, rescReg, 'rescue')} className="space-y-3.5 text-xs">
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={rescReg.name} onChange={e => setRescReg({ ...rescReg, name: e.target.value })} placeholder="Full Name" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={rescReg.phone} onChange={e => setRescReg({ ...rescReg, phone: e.target.value })} placeholder="Mobile Number" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="email" required value={rescReg.email} onChange={e => setRescReg({ ...rescReg, email: e.target.value })} placeholder="Email Address" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <select value={rescReg.department} onChange={e => setRescReg({ ...rescReg, department: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:border-amber-500 focus:outline-none font-semibold">
+                    <option value="Indian Coast Guard (ICG)">Department (Indian Coast Guard - ICG)</option>
+                    <option value="Marine Police">Department (Kerala Marine Police)</option>
+                    <option value="Coastal Search & Rescue">Department (Coastal Search & Rescue)</option>
+                  </select>
+                </div>
+
+                <div className="relative">
+                  <select value={rescReg.designation} onChange={e => setRescReg({ ...rescReg, designation: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:border-amber-500 focus:outline-none font-semibold">
+                    <option value="Commandant">Designation (Commandant)</option>
+                    <option value="Deputy Commandant">Designation (Deputy Commandant)</option>
+                    <option value="Rescue Officer">Designation (Rescue Operations Officer)</option>
+                  </select>
+                </div>
+
+                <div className="relative">
+                  <FileText className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={rescReg.employeeId} onChange={e => setRescReg({ ...rescReg, employeeId: e.target.value })} placeholder="Employee ID" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <MapPin className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={rescReg.stationUnit} onChange={e => setRescReg({ ...rescReg, stationUnit: e.target.value })} placeholder="Select Station / Unit" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type={showPasswords.rescPass ? 'text' : 'password'} required value={rescReg.password} onChange={e => setRescReg({ ...rescReg, password: e.target.value })} placeholder="Password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none" />
+                  <button type="button" onClick={() => setShowPasswords({ ...showPasswords, rescPass: !showPasswords.rescPass })} className="absolute right-3 top-3 text-slate-500 hover:text-white">
+                    {showPasswords.rescPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type={showPasswords.rescConf ? 'text' : 'password'} required value={rescReg.confirmPassword} onChange={e => setRescReg({ ...rescReg, confirmPassword: e.target.value })} placeholder="Confirm Password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none" />
+                  <button type="button" onClick={() => setShowPasswords({ ...showPasswords, rescConf: !showPasswords.rescConf })} className="absolute right-3 top-3 text-slate-500 hover:text-white">
+                    {showPasswords.rescConf ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-amber-900/40 transition flex items-center justify-center space-x-2 mt-4">
+                  <UserPlus className="w-4 h-4" />
+                  <span>Register</span>
+                </button>
+              </form>
+            </div>
+
+            <p className="text-[10px] text-slate-500 text-center mt-4">
+              By registering, you agree to our <a href="#" className="text-amber-400 underline">Terms & Conditions</a> and <a href="#" className="text-amber-400 underline">Privacy Policy</a>
+            </p>
+          </div>
+
+          {/* CARD 4: Administrator Registration (Purple Glow Theme) */}
+          <div className="bg-slate-900/90 border border-purple-500/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between hover:border-purple-500 transition">
+            <div>
+              <div className="w-14 h-14 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                <Building2 className="w-7 h-7" />
+              </div>
+              
+              <h3 className="text-xl font-extrabold text-purple-400">Administrator Registration</h3>
+              <p className="text-xs text-slate-400 mt-1 mb-6 leading-relaxed">
+                Register as an Administrator to manage system, users, boats and overall operations
+              </p>
+
+              <form onSubmit={e => handleCardRegistrationSubmit(e, admReg, 'admin')} className="space-y-3.5 text-xs">
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={admReg.name} onChange={e => setAdmReg({ ...admReg, name: e.target.value })} placeholder="Full Name" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={admReg.phone} onChange={e => setAdmReg({ ...admReg, phone: e.target.value })} placeholder="Mobile Number" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="email" required value={admReg.email} onChange={e => setAdmReg({ ...admReg, email: e.target.value })} placeholder="Email Address" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Building2 className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={admReg.department} onChange={e => setAdmReg({ ...admReg, department: e.target.value })} placeholder="Department / Organization" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <select value={admReg.designation} onChange={e => setAdmReg({ ...admReg, designation: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:border-purple-500 focus:outline-none font-semibold">
+                    <option value="District Fisheries Officer">Designation (District Fisheries Officer)</option>
+                    <option value="Joint Director">Designation (Joint Director of Fisheries)</option>
+                    <option value="State System Admin">Designation (State System Admin)</option>
+                  </select>
+                </div>
+
+                <div className="relative">
+                  <FileText className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type="text" required value={admReg.employeeId} onChange={e => setAdmReg({ ...admReg, employeeId: e.target.value })} placeholder="Employee ID" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none" />
+                </div>
+
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type={showPasswords.admPass ? 'text' : 'password'} required value={admReg.password} onChange={e => setAdmReg({ ...admReg, password: e.target.value })} placeholder="Password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none" />
+                  <button type="button" onClick={() => setShowPasswords({ ...showPasswords, admPass: !showPasswords.admPass })} className="absolute right-3 top-3 text-slate-500 hover:text-white">
+                    {showPasswords.admPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input type={showPasswords.admConf ? 'text' : 'password'} required value={admReg.confirmPassword} onChange={e => setAdmReg({ ...admReg, confirmPassword: e.target.value })} placeholder="Confirm Password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none" />
+                  <button type="button" onClick={() => setShowPasswords({ ...showPasswords, admConf: !showPasswords.admConf })} className="absolute right-3 top-3 text-slate-500 hover:text-white">
+                    {showPasswords.admConf ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-500 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-purple-900/40 transition flex items-center justify-center space-x-2 mt-4">
+                  <UserPlus className="w-4 h-4" />
+                  <span>Register</span>
+                </button>
+              </form>
+            </div>
+
+            <p className="text-[10px] text-slate-500 text-center mt-4">
+              By registering, you agree to our <a href="#" className="text-purple-400 underline">Terms & Conditions</a> and <a href="#" className="text-purple-400 underline">Privacy Policy</a>
+            </p>
+          </div>
+
+        </main>
+
+        {/* Security Assurance Footer Bar */}
+        <footer className="bg-slate-900/80 border-t border-slate-800 px-8 py-4 mt-6 backdrop-blur-md">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-slate-950 rounded-xl border border-slate-800 text-cyan-400">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-extrabold text-white">Secure Registration</h4>
+                <p className="text-[11px] text-slate-400">Your information is encrypted and secure with us. We never share your data with third parties.</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4 text-[11px] font-bold text-slate-300">
+              <span className="flex items-center space-x-1.5 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                <Lock className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Data Encrypted</span>
+              </span>
+              <span className="flex items-center space-x-1.5 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                <Radio className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Secure Connection</span>
+              </span>
+              <span className="flex items-center space-x-1.5 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                <span>Privacy Protected</span>
+              </span>
+            </div>
+          </div>
+        </footer>
 
       </div>
     );
   }
 
   // =========================================================================
-  // 2. LOGGED IN PORTAL VIEW (STRICT USER ISOLATION - ONLY SHOWS OWN ROLE)
+  // 3. LOGGED IN PORTAL VIEW (STRICT USER ISOLATION - ONLY SHOWS OWN ROLE)
   // =========================================================================
   const userRole = currentUser.role;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-
+      
       {/* Top Application Header */}
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
         <div className="flex items-center space-x-3">
@@ -728,7 +1092,7 @@ export default function SmartFishermenApp() {
             {userRole === 'fisherman' && boat && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-
+                  
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center space-x-2">
@@ -737,7 +1101,7 @@ export default function SmartFishermenApp() {
                         <span className="bg-cyan-500/20 text-cyan-400 text-xs px-2.5 py-0.5 rounded-full border border-cyan-500/30 font-bold">{boat.status}</span>
                       </div>
                       <p className="text-xs text-slate-400 mt-1">Reg: <strong>{boat.registrationNumber}</strong> | Pos: ({boat.latitude?.toFixed(4)}° N, {boat.longitude?.toFixed(4)}° E)</p>
-
+                      
                       <div className="flex flex-wrap items-center gap-2 text-xs mt-2">
                         <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold flex items-center space-x-1">
                           <Zap className="w-3.5 h-3.5 text-emerald-400" />
@@ -795,7 +1159,7 @@ export default function SmartFishermenApp() {
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[380px] relative overflow-hidden isolate shadow-xl">
                     <MapContainer center={[boat.latitude || 9.9312, boat.longitude || 76.2673]} zoom={11} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; OpenStreetMap & SFSRS' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
+                      
                       <Marker position={[boat.latitude || 9.9312, boat.longitude || 76.2673]} icon={boatIcon}>
                         <Popup><strong className="font-bold">{boat.name}</strong><br />Speed: {boat.speedKnots} kn</Popup>
                       </Marker>
@@ -882,9 +1246,9 @@ export default function SmartFishermenApp() {
             {/* 2. FAMILY PORTAL VIEW */}
             {userRole === 'family' && boat && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
+                
                 <div className="lg:col-span-2 space-y-6">
-
+                  
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center space-x-4">
                       {captain?.avatar ? (
@@ -971,7 +1335,7 @@ export default function SmartFishermenApp() {
                 </div>
 
                 <div className="space-y-6">
-
+                  
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
                     <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                       <h4 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center space-x-1.5">
@@ -1034,12 +1398,12 @@ export default function SmartFishermenApp() {
             {/* 3. COAST GUARD RESCUE VIEW */}
             {userRole === 'rescue' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
+                
                 <div className="lg:col-span-2 space-y-4">
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[460px] relative overflow-hidden isolate shadow-xl">
                     <MapContainer center={[9.8800, 76.1500]} zoom={9} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; Coast Guard MROC' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
+                      
                       {coastalDistricts.map(dist => (
                         <Marker key={dist.id} position={[dist.lat, dist.lon]} icon={harborMarker}>
                           <Popup>
@@ -1076,7 +1440,7 @@ export default function SmartFishermenApp() {
                         positions={driftPoints}
                         pathOptions={{ color: '#f59e0b', weight: 4, dashArray: '4, 8' }}
                       />
-
+                      
                       {driftPoints[1] && <Circle center={driftPoints[1]} radius={500} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15 }} />}
                       {driftPoints[2] && <Circle center={driftPoints[2]} radius={900} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.10 }} />}
                       {driftPoints[3] && <Circle center={driftPoints[3]} radius={1300} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.08 }} />}
@@ -1145,7 +1509,7 @@ export default function SmartFishermenApp() {
             {/* 4. GOVT ADMIN VIEW */}
             {userRole === 'admin' && (
               <div className="space-y-6">
-
+                
                 {/* Pending User Access Applications Panel */}
                 <div className="bg-slate-900 border border-amber-500/40 rounded-2xl p-5 space-y-4 shadow-xl">
                   <div className="flex justify-between items-center border-b border-amber-500/30 pb-3">
@@ -1180,7 +1544,7 @@ export default function SmartFishermenApp() {
                             <tr key={pu.id} className="hover:bg-slate-800/40 transition">
                               <td className="p-3 font-bold text-white">{pu.name}</td>
                               <td className="p-3 text-cyan-300">{pu.email}</td>
-                              <td className="p-3 font-mono text-[11px]">{pu.aadhaarNumber}</td>
+                              <td className="p-3 font-mono text-[11px]">{pu.aadhaarNumber || pu.employeeId || 'ID-VERIFIED'}</td>
                               <td className="p-3">
                                 <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
                                   {pu.role}

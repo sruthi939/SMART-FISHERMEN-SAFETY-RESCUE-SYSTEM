@@ -3,7 +3,13 @@ const { readData, writeData } = require('../config/database');
 const { JWT_SECRET } = require('../middleware/authMiddleware');
 
 exports.register = (req, res) => {
-  const { name, email, phone, password, role, aadhaarNumber } = req.body;
+  const { 
+    name, email, phone, password, role, 
+    aadhaarNumber, experienceYears, state, district, 
+    relationship, fishermanPhone, address, 
+    department, designation, employeeId, stationUnit 
+  } = req.body;
+  
   const db = readData();
 
   if (!email || !name) {
@@ -23,18 +29,29 @@ exports.register = (req, res) => {
     name,
     email,
     phone: phone || '+91 9000000000',
-    aadhaarNumber: aadhaarNumber || '1234-5678-9012',
     password: password || 'password123',
     role: mappedRole,
     status: 'PENDING_ADMIN_APPROVAL',
-    requestedAt: new Date().toISOString()
+    requestedAt: new Date().toISOString(),
+    // Extended Metadata
+    aadhaarNumber: aadhaarNumber || null,
+    experienceYears: experienceYears || null,
+    state: state || null,
+    district: district || null,
+    relationship: relationship || null,
+    fishermanPhone: fishermanPhone || null,
+    address: address || null,
+    department: department || null,
+    designation: designation || null,
+    employeeId: employeeId || null,
+    stationUnit: stationUnit || null
   };
 
   db.users.push(newUser);
   writeData(db);
 
   res.status(201).json({
-    message: 'Portal access registration application submitted successfully! PENDING GOVERNMENT ADMIN APPROVAL.',
+    message: 'Portal registration application submitted successfully! PENDING GOVERNMENT ADMIN APPROVAL.',
     user: {
       id: newUser.id,
       name: newUser.name,
@@ -102,7 +119,7 @@ exports.getUsers = (req, res) => {
     id: u.id,
     name: u.name,
     email: u.email,
-    role: u.role === 'rescue_team' ? 'rescue' : (u.role === 'gov_admin' ? 'admin' : u.role),
+    role: u.role === 'rescue_team' ? 'rescue' : (user.role === 'gov_admin' ? 'admin' : u.role),
     status: u.status || 'APPROVED',
     avatar: u.avatar
   }));
