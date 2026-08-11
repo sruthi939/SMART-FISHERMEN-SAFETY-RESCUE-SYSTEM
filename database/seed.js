@@ -263,6 +263,116 @@ const initialData = {
       complianceScore: 92,
       blockchainTxHash: '0x4e12c8d7b3a95012f45e67890a12b3456789cdef0123456789abcdef01234567'
     }
+  ],
+  keralaCoastalDistricts: [
+    {
+      id: 'dist-01',
+      districtName: 'Thiruvananthapuram',
+      code: 'TVM',
+      coastlineKm: 78.0,
+      majorHarbors: ['Vizhinjam Deepwater Harbor', 'Muthalapozhi Harbor (Perumathura)', 'Poovar Landing Center'],
+      landingCentersCount: 42,
+      registeredVesselsCount: 3840,
+      coastGuardStation: 'ICGS Vizhinjam',
+      lat: 8.3783,
+      lon: 76.9950
+    },
+    {
+      id: 'dist-02',
+      districtName: 'Kollam',
+      code: 'KLM',
+      coastlineKm: 37.0,
+      majorHarbors: ['Neendakara Major Fishing Harbor', 'Sakthikulangara Harbor', 'Azheekal Harbor'],
+      landingCentersCount: 28,
+      registeredVesselsCount: 4210,
+      coastGuardStation: 'ICGS Neendakara Support Base',
+      lat: 8.9460,
+      lon: 76.5400
+    },
+    {
+      id: 'dist-03',
+      districtName: 'Alappuzha',
+      code: 'ALP',
+      coastlineKm: 82.0,
+      majorHarbors: ['Thottappally Harbor', 'Arthunkal Landing Center', 'Kayamkulam Fishing Gap'],
+      landingCentersCount: 35,
+      registeredVesselsCount: 3150,
+      coastGuardStation: 'ICGS Alappuzha Outpost',
+      lat: 9.4981,
+      lon: 76.3388
+    },
+    {
+      id: 'dist-04',
+      districtName: 'Ernakulam',
+      code: 'EKM',
+      coastlineKm: 46.0,
+      majorHarbors: ['Munambam Major Deepwater Harbor', 'Fort Kochi Fisheries Harbor', 'Chellanam Harbor'],
+      landingCentersCount: 22,
+      registeredVesselsCount: 5620,
+      coastGuardStation: 'Coast Guard District HQ No. 4 (Kochi)',
+      lat: 9.9600,
+      lon: 76.2400
+    },
+    {
+      id: 'dist-05',
+      districtName: 'Thrissur',
+      code: 'TCR',
+      coastlineKm: 54.0,
+      majorHarbors: ['Chettuva Fishing Harbor', 'Azhikode Harbor', 'Snehatheeram Coast'],
+      landingCentersCount: 18,
+      registeredVesselsCount: 2100,
+      coastGuardStation: 'ICGS Azhikode Patrol Post',
+      lat: 10.3550,
+      lon: 76.0100
+    },
+    {
+      id: 'dist-06',
+      districtName: 'Malappuram',
+      code: 'MPM',
+      coastlineKm: 70.0,
+      majorHarbors: ['Ponnani Major Fishing Harbor', 'Tanur Landing Center', 'Parappanangadi Harbor'],
+      landingCentersCount: 24,
+      registeredVesselsCount: 2980,
+      coastGuardStation: 'ICGS Ponnani Station',
+      lat: 10.7700,
+      lon: 75.9200
+    },
+    {
+      id: 'dist-07',
+      districtName: 'Kozhikode',
+      code: 'KKD',
+      coastlineKm: 71.0,
+      majorHarbors: ['Puthiyappa Fishing Harbor', 'Beypore Commercial Port', 'Koyilandy Harbor', 'Chombala Harbor'],
+      landingCentersCount: 34,
+      registeredVesselsCount: 4890,
+      coastGuardStation: 'ICGS Beypore Station',
+      lat: 11.1600,
+      lon: 75.8000
+    },
+    {
+      id: 'dist-08',
+      districtName: 'Kannur',
+      code: 'KNR',
+      coastlineKm: 82.0,
+      majorHarbors: ['Ayikkara Fishing Harbor', 'Thalassery Landing Center', 'Azhikkal Port'],
+      landingCentersCount: 26,
+      registeredVesselsCount: 3240,
+      coastGuardStation: 'ICGS Ezhimala Naval & CG Station',
+      lat: 11.8700,
+      lon: 75.3600
+    },
+    {
+      id: 'dist-09',
+      districtName: 'Kasaragod',
+      code: 'KSD',
+      coastlineKm: 70.0,
+      majorHarbors: ['Kasaragod Fisheries Harbor', 'Manjeshwar Landing Station', 'Cheruvathur Harbor'],
+      landingCentersCount: 19,
+      registeredVesselsCount: 1950,
+      coastGuardStation: 'ICGS Kasaragod Outpost',
+      lat: 12.5000,
+      lon: 74.9800
+    }
   ]
 };
 

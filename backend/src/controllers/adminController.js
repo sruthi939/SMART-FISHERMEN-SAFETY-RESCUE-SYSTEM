@@ -15,13 +15,20 @@ exports.getAdminDashboard = (req, res) => {
       activeAtSea,
       activeEmergencies,
       totalFishermen,
-      totalSubsidiesDisbursedINR: totalSubsidiesDisbursed
+      totalSubsidiesDisbursedINR: totalSubsidiesDisbursed,
+      totalCoastalDistricts: (db.keralaCoastalDistricts || []).length
     },
     boats: db.boats,
     crew: db.crew,
     emergencies: db.emergencies,
-    governmentRecords: db.governmentRecords
+    governmentRecords: db.governmentRecords,
+    keralaCoastalDistricts: db.keralaCoastalDistricts || []
   });
+};
+
+exports.getCoastalDistricts = (req, res) => {
+  const db = readData();
+  res.json({ coastalDistricts: db.keralaCoastalDistricts || [] });
 };
 
 exports.registerBoat = (req, res) => {

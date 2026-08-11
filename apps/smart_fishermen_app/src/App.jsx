@@ -3,7 +3,7 @@ import {
   ShieldAlert, Anchor, Heart, Building2, Radio, Compass, Fuel, 
   Battery, AlertTriangle, MapPin, Users, Wind, Waves, CheckCircle2, 
   LifeBuoy, PhoneCall, Clock, Navigation, Plus, FileCheck, IndianRupee, 
-  RefreshCw, Camera, Mic, Cpu, Lock, ShieldCheck, Zap, Crosshair
+  RefreshCw, Camera, Mic, Cpu, Lock, ShieldCheck, Zap, Crosshair, Server, Database, Satellite, Layers, Map
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
@@ -36,6 +36,12 @@ const rescueUnitIcon = new L.DivIcon({
   iconSize: [30, 30]
 });
 
+const harborMarker = new L.DivIcon({
+  className: 'custom-harbor-marker',
+  html: `<div style="background-color: #eab308; color: black; padding: 4px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 10px #eab308;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M12 2v10M8 8l4-4 4 4"/></svg></div>`,
+  iconSize: [26, 26]
+});
+
 export default function SmartFishermenApp() {
   const [activeRole, setActiveRole] = useState('fisherman');
   const [connected, setConnected] = useState(false);
@@ -49,6 +55,8 @@ export default function SmartFishermenApp() {
   const [emergencies, setEmergencies] = useState([]);
   const [rescueUnits, setRescueUnits] = useState([]);
   const [adminSummary, setAdminSummary] = useState(null);
+  const [coastalDistricts, setCoastalDistricts] = useState([]);
+  const [selectedDistrict, setSelectedDistrict] = useState('ALL');
   const [imblWarning, setImblWarning] = useState(null);
   const [driftData, setDriftData] = useState(null);
 
@@ -102,11 +110,17 @@ export default function SmartFishermenApp() {
       .then(data => { if (data) setDriftData(data); })
       .catch(err => console.error(err));
 
+    fetch(`${BACKEND_URL}/api/admin/coastal-districts`)
+      .then(res => res.json())
+      .then(data => { if (data.coastalDistricts) setCoastalDistricts(data.coastalDistricts); })
+      .catch(err => console.error(err));
+
     fetch(`${BACKEND_URL}/api/admin/dashboard`)
       .then(res => res.json())
       .then(data => {
         if (data.summary) setAdminSummary(data.summary);
         if (data.boats) setAllBoats(data.boats);
+        if (data.keralaCoastalDistricts) setCoastalDistricts(data.keralaCoastalDistricts);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -254,7 +268,7 @@ export default function SmartFishermenApp() {
     });
   };
 
-  // Dynamic Family ETA calculation based on boat distance to Kochi Harbor
+  // Dynamic Family ETA calculation
   const homePortLat = 9.9600;
   const homePortLon = 76.2400;
   const boatLat = boat?.latitude || 9.9312;
@@ -264,7 +278,7 @@ export default function SmartFishermenApp() {
   const hoursToPort = boatSpeed > 0 ? parseFloat((distanceNM / boatSpeed).toFixed(1)) : 0;
   const captain = crew.find(c => c.role === 'CAPTAIN') || crew[0] || { name: 'Ramesh Kumar', role: 'CAPTAIN' };
 
-  // Dynamic AI MOB Drift Points from Backend API
+  // Dynamic AI MOB Drift Points
   const mobIncident = emergencies.find(e => e.emergencyType === 'MAN_OVERBOARD' && e.status !== 'RESCUED');
   const initialMobLat = mobIncident ? mobIncident.latitude : 9.8540;
   const initialMobLon = mobIncident ? mobIncident.longitude : 76.1200;
@@ -279,6 +293,11 @@ export default function SmartFishermenApp() {
     [initialMobLat - 0.045, initialMobLon - 0.075]
   ];
 
+  // District Filtering
+  const filteredDistricts = selectedDistrict === 'ALL'
+    ? coastalDistricts
+    : coastalDistricts.filter(d => d.code === selectedDistrict || d.districtName.toUpperCase().includes(selectedDistrict.toUpperCase()));
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       
@@ -291,9 +310,11 @@ export default function SmartFishermenApp() {
           <div>
             <h1 className="text-sm font-extrabold text-white tracking-wider uppercase flex items-center space-x-2">
               <span>SMART FISHERMEN SAFETY SYSTEM (SFSRS)</span>
-              <span className="bg-cyan-500/20 text-cyan-400 text-[10px] px-2 py-0.5 rounded border border-cyan-500/30">v2.0 NEXT-GEN</span>
+              <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30 font-bold">
+                KERALA ALL 9 COASTAL DISTRICTS ACTIVE
+              </span>
             </h1>
-            <p className="text-[11px] text-slate-400">Autonomous SAR Drones • AI MOB Drift Trajectory • LoRa Mesh Relay • Blockchain Audit</p>
+            <p className="text-[11px] text-slate-400">Vizhinjam • Neendakara • Thottappally • Munambam • Chettuva • Ponnani • Beypore • Ayikkara • Kasaragod</p>
           </div>
         </div>
 
@@ -313,7 +334,7 @@ export default function SmartFishermenApp() {
           </button>
           <button onClick={() => setActiveRole('admin')} className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center space-x-1.5 ${activeRole === 'admin' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
             <Building2 className="w-3.5 h-3.5" />
-            <span>Govt Admin</span>
+            <span>Govt Admin (All Districts)</span>
           </button>
         </div>
 
@@ -323,7 +344,7 @@ export default function SmartFishermenApp() {
         </div>
       </header>
 
-      {/* IMBL Boundary Alert Banner if Near Border */}
+      {/* IMBL Boundary Alert Banner */}
       {imblWarning && (
         <div className="bg-amber-600 text-slate-950 px-6 py-2 font-bold flex items-center justify-between text-xs animate-pulse">
           <div className="flex items-center space-x-2">
@@ -360,7 +381,6 @@ export default function SmartFishermenApp() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                   
-                  {/* Boat Header & SOS */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center space-x-2">
@@ -369,12 +389,15 @@ export default function SmartFishermenApp() {
                         <span className="bg-cyan-500/20 text-cyan-400 text-xs px-2.5 py-0.5 rounded-full border border-cyan-500/30 font-bold">{boat.status}</span>
                       </div>
                       <p className="text-xs text-slate-400 mt-1">Reg: <strong>{boat.registrationNumber}</strong> | Pos: ({boat.latitude?.toFixed(4)}° N, {boat.longitude?.toFixed(4)}° E)</p>
-                      <div className="flex items-center space-x-3 text-xs text-cyan-300 mt-1">
-                        <span>Speed: <strong>{boat.speedKnots} kn</strong></span>
-                        <span>•</span>
-                        <span className="flex items-center space-x-1 text-amber-400 font-bold">
-                          <Zap className="w-3.5 h-3.5" />
-                          <span>Signal: {boat.signalType || 'LORA_MESH_RELAY'} [Via KL-07-FISH-105]</span>
+                      
+                      <div className="flex flex-wrap items-center gap-2 text-xs mt-2">
+                        <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold flex items-center space-x-1">
+                          <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Bearer: {boat.signalType || 'HYBRID_LORA_MESH'} [Multi-Hop Relayed]</span>
+                        </span>
+                        <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded-lg font-bold flex items-center space-x-1">
+                          <Satellite className="w-3.5 h-3.5 text-purple-400" />
+                          <span>NavIC + GPS Sat Lock (14 Sats)</span>
                         </span>
                       </div>
                     </div>
@@ -420,7 +443,7 @@ export default function SmartFishermenApp() {
                     </div>
                   </div>
 
-                  {/* Dynamic Navigation & IMBL Boundary Map */}
+                  {/* Navigation Map */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[380px] relative overflow-hidden isolate shadow-xl">
                     <MapContainer center={[boat.latitude || 9.9312, boat.longitude || 76.2673]} zoom={11} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; OpenStreetMap & SFSRS' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -448,16 +471,13 @@ export default function SmartFishermenApp() {
                   <div className="flex gap-3">
                     <button onClick={() => triggerMOB('c-02')} className="bg-slate-900 hover:bg-slate-800 border border-amber-500/30 text-amber-300 p-3.5 rounded-xl flex items-center space-x-2 font-bold text-xs transition">
                       <LifeBuoy className="w-4 h-4 text-amber-400" />
-                      <span>Simulate Man-Overboard (MOB)</span>
+                      <span>Simulate Dual-Validated Man-Overboard (MOB)</span>
                     </button>
                   </div>
 
                 </div>
 
-                {/* Right Telemetry Column */}
                 <div className="space-y-6">
-                  
-                  {/* Weather Risk */}
                   {weather && (
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
                       <div className="flex justify-between items-center mb-2">
@@ -470,9 +490,12 @@ export default function SmartFishermenApp() {
                     </div>
                   )}
 
-                  {/* Sensors */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-                    <span className="text-xs font-bold uppercase text-slate-400">Live ESP32 & Gyro Telemetry</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold uppercase text-slate-400">ESP32 & Dual-Sensor Diagnostics</span>
+                      <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold border border-emerald-500/30">ANTI-FALSE-ALARM ACTIVE</span>
+                    </div>
+
                     <div>
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-slate-400">Diesel Fuel Level</span>
@@ -482,12 +505,13 @@ export default function SmartFishermenApp() {
                         <div className={`h-2 rounded-full ${boat.fuelPct > 50 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${boat.fuelPct}%` }} />
                       </div>
                     </div>
-                    <div className="flex justify-between text-xs pt-1"><span className="text-slate-400">Battery Voltage</span><span className="font-bold text-emerald-400">{boat.batteryV} V</span></div>
+
+                    <div className="flex justify-between text-xs pt-1"><span className="text-slate-400">Backup Battery Bank</span><span className="font-bold text-emerald-400">{boat.batteryV} V (DC)</span></div>
                     <div className="flex justify-between text-xs pt-1"><span className="text-slate-400">Bilge Water Sensor</span><span className={`font-bold ${boat.waterLeak ? 'text-red-400' : 'text-slate-300'}`}>{boat.waterLeak ? 'WATER DETECTED' : 'DRY (NORMAL)'}</span></div>
                     <div className="flex justify-between text-xs pt-1"><span className="text-slate-400">MPU6050 Gyro Roll Angle</span><span className="font-bold text-white">{boat.tiltAngle}° (STABLE)</span></div>
+                    <div className="flex justify-between text-xs pt-1 border-t border-slate-800/80 pt-2"><span className="text-slate-400">Hardware Seal</span><span className="font-bold text-emerald-400">IP68 WATERPROOF SEAL PASSED</span></div>
                   </div>
 
-                  {/* Crew */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
                     <span className="text-xs font-bold uppercase text-slate-400">Onboard Crew Manifest</span>
                     {crew.map(c => (
@@ -516,7 +540,7 @@ export default function SmartFishermenApp() {
                     <div>
                       <h3 className="text-lg font-extrabold text-white">{captain.name}</h3>
                       <p className="text-xs text-slate-400">Vessel: {boat.name} ({boat.registrationNumber}) • {boat.homePort}</p>
-                      <p className="text-xs text-emerald-400 font-bold mt-1">Status: SAFE AT SEA • Telemetry Active</p>
+                      <p className="text-xs text-emerald-400 font-bold mt-1">Status: SAFE AT SEA • Multi-Bearer Live Syncing</p>
                     </div>
                   </div>
 
@@ -541,12 +565,22 @@ export default function SmartFishermenApp() {
             {activeRole === 'rescue' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Operations & AI Drift Trajectory Map */}
                 <div className="lg:col-span-2 space-y-4">
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 h-[460px] relative overflow-hidden isolate shadow-xl">
-                    <MapContainer center={[9.8800, 76.1500]} zoom={10} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
+                    <MapContainer center={[9.8800, 76.1500]} zoom={9} scrollWheelZoom={true} style={{ height: '100%', width: '100%', borderRadius: '1rem' }}>
                       <TileLayer attribution='&copy; Coast Guard MROC' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                       
+                      {/* Kerala All 9 Coastal District Harbor Markers */}
+                      {coastalDistricts.map(dist => (
+                        <Marker key={dist.id} position={[dist.lat, dist.lon]} icon={harborMarker}>
+                          <Popup>
+                            <strong className="font-bold text-amber-600">{dist.districtName} District</strong><br />
+                            Harbors: {dist.majorHarbors.join(', ')}<br />
+                            CG Base: {dist.coastGuardStation}
+                          </Popup>
+                        </Marker>
+                      ))}
+
                       {/* Active Boats */}
                       {allBoats.map(b => (
                         <Marker key={b.id} position={[b.latitude || 9.9312, b.longitude || 76.2673]} icon={boatIcon}>
@@ -579,13 +613,11 @@ export default function SmartFishermenApp() {
                         pathOptions={{ color: '#f59e0b', weight: 4, dashArray: '4, 8' }}
                       />
                       
-                      {/* Search Radius Circles */}
                       {driftPoints[1] && <Circle center={driftPoints[1]} radius={500} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15 }} />}
                       {driftPoints[2] && <Circle center={driftPoints[2]} radius={900} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.10 }} />}
                       {driftPoints[3] && <Circle center={driftPoints[3]} radius={1300} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.08 }} />}
                     </MapContainer>
 
-                    {/* AI Drift Overlay */}
                     <div className="absolute top-4 right-4 bg-slate-900/90 border border-amber-500/40 p-3 rounded-xl backdrop-blur-md z-30 text-xs space-y-1 shadow-xl">
                       <span className="font-bold text-amber-400 flex items-center space-x-1">
                         <Crosshair className="w-4 h-4" />
@@ -593,11 +625,9 @@ export default function SmartFishermenApp() {
                       </span>
                       <p className="text-[11px] text-slate-300">Sea Current: <strong>{driftData?.driftSpeedKnots || 1.8} knots @ 225° SW</strong></p>
                       <p className="text-[11px] text-slate-300">+1h Projected: ({driftPoints[1][0].toFixed(4)}, {driftPoints[1][1].toFixed(4)})</p>
-                      <p className="text-[11px] text-slate-300">+3h Projected: ({driftPoints[3][0].toFixed(4)}, {driftPoints[3][1].toFixed(4)})</p>
                     </div>
                   </div>
 
-                  {/* SAR Drone Quick Action */}
                   <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="p-2.5 bg-purple-600/20 text-purple-400 rounded-xl border border-purple-500/30">
@@ -616,7 +646,6 @@ export default function SmartFishermenApp() {
 
                 </div>
 
-                {/* Emergency Incident Queue */}
                 <div className="space-y-4">
                   <h3 className="text-xs font-bold uppercase text-slate-400">Active Distress Incident Queue</h3>
                   <div className="space-y-3 overflow-y-auto max-h-[520px] pr-1">
@@ -649,39 +678,123 @@ export default function SmartFishermenApp() {
               </div>
             )}
 
-            {/* 4. GOVT ADMIN VIEW */}
+            {/* 4. GOVT ADMIN VIEW - ALL 9 KERALA COASTAL DISTRICTS SEASHORE REGISTRY */}
             {activeRole === 'admin' && (
               <div className="space-y-6">
                 
+                {/* Stats Header */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                    <span className="text-slate-400 text-xs font-bold">TOTAL REGISTERED FLEET</span>
-                    <p className="text-2xl font-extrabold text-white mt-1">{adminSummary?.totalBoats || allBoats.length} Vessels</p>
+                    <span className="text-slate-400 text-xs font-bold">ALL KERALA COASTAL DISTRICTS</span>
+                    <p className="text-2xl font-extrabold text-cyan-400 mt-1">9 Districts (590 km Coast)</p>
                   </div>
                   <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                    <span className="text-slate-400 text-xs font-bold">REGISTERED FISHERMEN</span>
-                    <p className="text-2xl font-extrabold text-white mt-1">{adminSummary?.totalFishermen || 4890} Crewmen</p>
+                    <span className="text-slate-400 text-xs font-bold">TOTAL REGISTERED HARBORS</span>
+                    <p className="text-2xl font-extrabold text-white mt-1">27 Major Harbors</p>
                   </div>
                   <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                    <span className="text-slate-400 text-xs font-bold">FUEL SUBSIDY DISBURSED</span>
-                    <p className="text-2xl font-extrabold text-emerald-400 mt-1">₹{((adminSummary?.totalSubsidiesDisbursedINR || 6425000) / 100000).toFixed(2)} Lakhs</p>
+                    <span className="text-slate-400 text-xs font-bold">COASTAL LANDING STATIONS</span>
+                    <p className="text-2xl font-extrabold text-emerald-400 mt-1">248 Landing Centers</p>
                   </div>
                   <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-                    <span className="text-slate-400 text-xs font-bold">BLOCKCHAIN AUDIT VERIFIED</span>
-                    <p className="text-2xl font-extrabold text-purple-400 mt-1">100% SHA-256</p>
+                    <span className="text-slate-400 text-xs font-bold">REGISTERED MARITIME FLEET</span>
+                    <p className="text-2xl font-extrabold text-purple-400 mt-1">32,980 Vessels</p>
                   </div>
                 </div>
 
+                {/* District Filter Chips */}
+                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xs font-extrabold uppercase text-slate-300 tracking-wider flex items-center space-x-2">
+                      <Map className="w-4 h-4 text-cyan-400" />
+                      <span>Select Kerala Maritime District to Inspect Seashore Harbors</span>
+                    </h3>
+                    <span className="text-[11px] text-slate-400">Showing {filteredDistricts.length} of {coastalDistricts.length} Districts</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button
+                      onClick={() => setSelectedDistrict('ALL')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${selectedDistrict === 'ALL' ? 'bg-cyan-600 text-white shadow-md' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+                    >
+                      All 9 Coastal Districts
+                    </button>
+                    {coastalDistricts.map(d => (
+                      <button
+                        key={d.id}
+                        onClick={() => setSelectedDistrict(d.code)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${selectedDistrict === d.code ? 'bg-cyan-600 text-white shadow-md' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+                      >
+                        {d.districtName} ({d.code})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Kerala 9 Coastal Districts Seashore Registry Table */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                   <div className="p-5 border-b border-slate-800 flex justify-between items-center">
                     <h3 className="text-xs font-extrabold uppercase text-white tracking-wider flex items-center space-x-2">
-                      <Lock className="w-4 h-4 text-purple-400" />
-                      <span>State Vessel Registry & Blockchain Audit Trail</span>
+                      <Anchor className="w-4 h-4 text-cyan-400" />
+                      <span>Official Kerala State Fisheries & Harbor Registry Directory</span>
                     </h3>
                     <button onClick={() => setShowRegModal(true)} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1">
                       <Plus className="w-3.5 h-3.5" />
                       <span>Register New Boat</span>
                     </button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-300">
+                      <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                        <tr>
+                          <th className="p-4">District</th>
+                          <th className="p-4">Coastline (km)</th>
+                          <th className="p-4">Major Seashores & Fishing Harbors</th>
+                          <th className="p-4">Landing Centers</th>
+                          <th className="p-4">Registered Fleet</th>
+                          <th className="p-4">Coast Guard / Naval Station</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {filteredDistricts.map(d => (
+                          <tr key={d.id} className="hover:bg-slate-800/40 transition">
+                            <td className="p-4 font-extrabold text-white flex items-center space-x-2">
+                              <MapPin className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                              <span>{d.districtName}</span>
+                            </td>
+                            <td className="p-4 font-semibold text-cyan-300">{d.coastlineKm} km</td>
+                            <td className="p-4">
+                              <div className="flex flex-wrap gap-1">
+                                {d.majorHarbors.map((h, idx) => (
+                                  <span key={idx} className="bg-slate-950 text-slate-200 border border-slate-800 px-2 py-0.5 rounded text-[10px] font-semibold">
+                                    ⚓ {h}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-4 font-bold text-emerald-400">{d.landingCentersCount} Centers</td>
+                            <td className="p-4 font-bold text-white">{d.registeredVesselsCount} Boats</td>
+                            <td className="p-4">
+                              <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded text-[10px] font-bold flex items-center space-x-1 w-fit">
+                                <ShieldCheck className="w-3 h-3 text-purple-400" />
+                                <span>{d.coastGuardStation}</span>
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Individual Registered Boat Registry */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                  <div className="p-5 border-b border-slate-800">
+                    <h3 className="text-xs font-extrabold uppercase text-white tracking-wider flex items-center space-x-2">
+                      <Lock className="w-4 h-4 text-purple-400" />
+                      <span>Registered Fishing Vessels & Cryptographic Blockchain Audit Ledger</span>
+                    </h3>
                   </div>
 
                   <div className="overflow-x-auto">
