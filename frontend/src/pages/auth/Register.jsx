@@ -1,30 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Anchor, 
-  Users, 
-  LifeBuoy, 
-  Building2, 
-  User, 
-  Phone, 
-  Mail, 
-  CreditCard, 
-  Briefcase, 
-  MapPin, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  Home, 
-  Shield, 
-  Award, 
-  Hash, 
-  ShieldCheck, 
-  Wifi, 
-  UserPlus, 
-  LockKeyhole 
-} from 'lucide-react';
+import { Anchor, Users, LifeBuoy, Building2, User, Phone, Mail, CreditCard, Briefcase, MapPin, Lock, Eye, EyeOff, Home, Shield, Award, Hash, ShieldCheck, Wifi, UserPlus, LockKeyhole } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../hooks/useNotification';
+import { authService } from '../../services/authService';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -54,7 +33,7 @@ export default function Register() {
       const res = await authService.register(formProps);
       const user = res.user || { name: formProps.name || roleName, role: roleName.toLowerCase() };
       const token = res.token || 'jwt_sample_token';
-      
+
       login(user, token);
       addNotification(`${roleName} Registration Successful! Redirecting...`, 'info');
       setTimeout(() => {
@@ -76,7 +55,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-[#070d19] text-slate-100 py-8 px-4 sm:px-6 lg:px-8 font-sans selection:bg-cyan-500 selection:text-slate-950">
       <div className="max-w-4xl mx-auto space-y-8">
-        
+
         {/* Top Header Bar */}
         <header className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-800/80">
           <div className="flex items-center gap-3">
@@ -95,8 +74,8 @@ export default function Register() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link 
-              to="/auth/login" 
+            <Link
+              to="/auth/login"
               className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-lg shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5"
             >
               <LockKeyhole size={14} />
@@ -117,11 +96,10 @@ export default function Register() {
                   setActiveTab(tab.id);
                   setShowPass({ pass: false, confirmPass: false });
                 }}
-                className={`flex items-center justify-center gap-2 py-3 px-3 rounded-lg text-xs font-bold transition border ${
-                  isActive
+                className={`flex items-center justify-center gap-2 py-3 px-3 rounded-lg text-xs font-bold transition border ${isActive
                     ? tab.activeColor
                     : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
+                  }`}
               >
                 <Icon size={16} />
                 <span>{tab.label}</span>
@@ -150,31 +128,31 @@ export default function Register() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <User size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="text" placeholder="Full Name" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
+                    <input name="name" type="text" placeholder="Full Name" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
                   </div>
 
                   <div className="relative">
                     <Phone size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="tel" placeholder="Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
+                    <input name="phone" type="tel" placeholder="Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Mail size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="email" placeholder="Email Address" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
+                    <input name="email" type="email" placeholder="Email Address" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
                   </div>
 
                   <div className="relative">
                     <CreditCard size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="text" placeholder="Aadhaar Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
+                    <input name="aadhaar" type="text" placeholder="Aadhaar Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                   <div className="relative">
                     <Briefcase size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <select required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition appearance-none">
+                    <select name="experience" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition appearance-none">
                       <option value="">Fishing Experience (Years)</option>
                       <option value="1-3">1 - 3 Years</option>
                       <option value="4-8">4 - 8 Years</option>
@@ -184,7 +162,7 @@ export default function Register() {
 
                   <div className="relative">
                     <MapPin size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <select required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition appearance-none">
+                    <select name="state" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition appearance-none">
                       <option value="">Select State</option>
                       <option value="Kerala">Kerala</option>
                       <option value="Tamil Nadu">Tamil Nadu</option>
@@ -194,7 +172,7 @@ export default function Register() {
 
                   <div className="relative">
                     <MapPin size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <select required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition appearance-none">
+                    <select name="district" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition appearance-none">
                       <option value="">Select District</option>
                       <option value="Ernakulam">Ernakulam</option>
                       <option value="Kollam">Kollam</option>
@@ -206,7 +184,7 @@ export default function Register() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type={showPass.pass ? 'text' : 'password'} placeholder="Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
+                    <input name="password" type={showPass.pass ? 'text' : 'password'} placeholder="Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
                     <button type="button" onClick={() => toggleShowPass('pass')} className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300">
                       {showPass.pass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -214,7 +192,7 @@ export default function Register() {
 
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type={showPass.confirmPass ? 'text' : 'password'} placeholder="Confirm Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
+                    <input name="confirmPassword" type={showPass.confirmPass ? 'text' : 'password'} placeholder="Confirm Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" />
                     <button type="button" onClick={() => toggleShowPass('confirmPass')} className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300">
                       {showPass.confirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -249,24 +227,24 @@ export default function Register() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <User size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="text" placeholder="Full Name" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
+                    <input name="name" type="text" placeholder="Full Name" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
                   </div>
 
                   <div className="relative">
                     <Phone size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="tel" placeholder="Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
+                    <input name="phone" type="tel" placeholder="Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Mail size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="email" placeholder="Email Address" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
+                    <input name="email" type="email" placeholder="Email Address" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
                   </div>
 
                   <div className="relative">
                     <Users size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <select required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500 transition appearance-none">
+                    <select name="relationship" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500 transition appearance-none">
                       <option value="">Relationship with Fisherman</option>
                       <option value="Spouse">Spouse</option>
                       <option value="Parent">Parent</option>
@@ -278,18 +256,18 @@ export default function Register() {
 
                 <div className="relative">
                   <Phone size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                  <input type="tel" placeholder="Fisherman Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
+                  <input name="fishermanPhone" type="tel" placeholder="Fisherman Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
                 </div>
 
                 <div className="relative">
                   <Home size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                  <textarea placeholder="Address" rows={2} required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition resize-none"></textarea>
+                  <textarea name="address" placeholder="Address" rows={2} required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition resize-none"></textarea>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type={showPass.pass ? 'text' : 'password'} placeholder="Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
+                    <input name="password" type={showPass.pass ? 'text' : 'password'} placeholder="Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
                     <button type="button" onClick={() => toggleShowPass('pass')} className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300">
                       {showPass.pass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -297,7 +275,7 @@ export default function Register() {
 
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type={showPass.confirmPass ? 'text' : 'password'} placeholder="Confirm Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
+                    <input name="confirmPassword" type={showPass.confirmPass ? 'text' : 'password'} placeholder="Confirm Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" />
                     <button type="button" onClick={() => toggleShowPass('confirmPass')} className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300">
                       {showPass.confirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -332,24 +310,24 @@ export default function Register() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <User size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="text" placeholder="Full Name" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
+                    <input name="name" type="text" placeholder="Full Name" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
                   </div>
 
                   <div className="relative">
                     <Phone size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="tel" placeholder="Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
+                    <input name="phone" type="tel" placeholder="Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Mail size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="email" placeholder="Email Address" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
+                    <input name="email" type="email" placeholder="Email Address" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
                   </div>
 
                   <div className="relative">
                     <Shield size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <select required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 transition appearance-none">
+                    <select name="department" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 transition appearance-none">
                       <option value="">Department</option>
                       <option value="Indian Coast Guard">Indian Coast Guard</option>
                       <option value="Marine Police">Marine Police</option>
@@ -361,7 +339,7 @@ export default function Register() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                   <div className="relative">
                     <Award size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <select required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 transition appearance-none">
+                    <select name="designation" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 transition appearance-none">
                       <option value="">Designation</option>
                       <option value="Rescue Commander">Rescue Commander</option>
                       <option value="Patrol Pilot">Patrol Pilot</option>
@@ -371,12 +349,12 @@ export default function Register() {
 
                   <div className="relative">
                     <Hash size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="text" placeholder="Employee ID" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
+                    <input name="employeeId" type="text" placeholder="Employee ID" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
                   </div>
 
                   <div className="relative">
                     <MapPin size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <select required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 transition appearance-none">
+                    <select name="station" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 transition appearance-none">
                       <option value="">Select Station / Unit</option>
                       <option value="Cochin Base">Cochin Base Unit</option>
                       <option value="Vizhinjam Base">Vizhinjam Marine Base</option>
@@ -388,7 +366,7 @@ export default function Register() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type={showPass.pass ? 'text' : 'password'} placeholder="Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
+                    <input name="password" type={showPass.pass ? 'text' : 'password'} placeholder="Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
                     <button type="button" onClick={() => toggleShowPass('pass')} className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300">
                       {showPass.pass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -396,7 +374,7 @@ export default function Register() {
 
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type={showPass.confirmPass ? 'text' : 'password'} placeholder="Confirm Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
+                    <input name="confirmPassword" type={showPass.confirmPass ? 'text' : 'password'} placeholder="Confirm Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
                     <button type="button" onClick={() => toggleShowPass('confirmPass')} className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300">
                       {showPass.confirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -431,31 +409,31 @@ export default function Register() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <User size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="text" placeholder="Full Name" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
+                    <input name="name" type="text" placeholder="Full Name" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
                   </div>
 
                   <div className="relative">
                     <Phone size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="tel" placeholder="Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
+                    <input name="phone" type="tel" placeholder="Mobile Number" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Mail size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="email" placeholder="Email Address" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
+                    <input name="email" type="email" placeholder="Email Address" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
                   </div>
 
                   <div className="relative">
                     <Building2 size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="text" placeholder="Department / Organization" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
+                    <input name="department" type="text" placeholder="Department / Organization" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Award size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <select required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-purple-500 transition appearance-none">
+                    <select name="designation" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-purple-500 transition appearance-none">
                       <option value="">Designation</option>
                       <option value="System Administrator">System Administrator</option>
                       <option value="Fisheries Officer">Fisheries Officer</option>
@@ -465,14 +443,14 @@ export default function Register() {
 
                   <div className="relative">
                     <Hash size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type="text" placeholder="Employee ID" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
+                    <input name="employeeId" type="text" placeholder="Employee ID" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type={showPass.pass ? 'text' : 'password'} placeholder="Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
+                    <input name="password" type={showPass.pass ? 'text' : 'password'} placeholder="Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
                     <button type="button" onClick={() => toggleShowPass('pass')} className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300">
                       {showPass.pass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -480,7 +458,7 @@ export default function Register() {
 
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-3 text-slate-500" />
-                    <input type={showPass.confirmPass ? 'text' : 'password'} placeholder="Confirm Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
+                    <input name="confirmPassword" type={showPass.confirmPass ? 'text' : 'password'} placeholder="Confirm Password" required className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition" />
                     <button type="button" onClick={() => toggleShowPass('confirmPass')} className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300">
                       {showPass.confirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
