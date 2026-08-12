@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import FishermanCard from '../../../frontend/src/components/FishermanCard';
-import Loader from '../../../frontend/src/components/Loader';
-import Button from '../../../frontend/src/components/Button';
-import { fishermanService } from '../../../frontend/src/services/fishermanService';
-import { authService } from '../../../frontend/src/services/authService';
-import { useNotification } from '../../../frontend/src/hooks/useNotification';
+import FishermanCard from '../components/FishermanCard';
+import Loader from '../components/Loader';
+import Button from '../components/Button';
+import { fishermanService } from '../services/fishermanService';
+import { authService } from '../services/authService';
+import { useNotification } from '../hooks/useNotification';
 import { CheckCircle, XCircle, Clock, ShieldCheck, UserCheck } from 'lucide-react';
 
 export default function Fishermen() {
-  const [tab, setTab] = useState('pending'); // 'pending' | 'directory'
+  const [tab, setTab] = useState('pending');
   const [fishermen, setFishermen] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,7 @@ export default function Fishermen() {
     }
   };
 
-  const handleApprove = async (userId, name, role) => {
+  const handleApprove = async (userId, name) => {
     try {
       const res = await authService.approveUser(userId);
       addNotification(res.message || `Approved access for ${name}!`, 'info');
@@ -67,20 +67,22 @@ export default function Fishermen() {
         <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
           <button
             onClick={() => setTab('pending')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${tab === 'pending'
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+              tab === 'pending'
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                 : 'text-slate-400 hover:text-white'
-              }`}
+            }`}
           >
             <Clock size={14} />
             <span>Pending Approvals ({pendingUsers.length})</span>
           </button>
           <button
             onClick={() => setTab('directory')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${tab === 'directory'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+              tab === 'directory'
+                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
                 : 'text-slate-400 hover:text-white'
-              }`}
+            }`}
           >
             <UserCheck size={14} />
             <span>Fishermen Directory ({fishermen.length})</span>
@@ -127,7 +129,7 @@ export default function Fishermen() {
                     <Button
                       variant="primary"
                       className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 text-xs"
-                      onClick={() => handleApprove(user.id, user.name, user.role)}
+                      onClick={() => handleApprove(user.id, user.name)}
                     >
                       <CheckCircle size={15} />
                       <span>Approve Access</span>

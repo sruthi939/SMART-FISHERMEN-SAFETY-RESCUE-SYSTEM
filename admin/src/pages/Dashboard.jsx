@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Anchor, ShieldAlert, Radio, UserCheck, ArrowRight } from 'lucide-react';
-import Map from '../../../frontend/src/components/Map';
-import AlertCard from '../../../frontend/src/components/AlertCard';
-import { authService } from '../../../frontend/src/services/authService';
-import { emergencyService } from '../../../frontend/src/services/emergencyService';
+import Map from '../components/Map';
+import AlertCard from '../components/AlertCard';
+import { authService } from '../services/authService';
+import { emergencyService } from '../services/emergencyService';
 
-export default function AdminDashboard() {
+export default function Dashboard() {
   const [pendingCount, setPendingCount] = useState(0);
   const [activeSOSCount, setActiveSOSCount] = useState(0);
 
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-extrabold text-white">Government Admin Command Dashboard</h1>
-        <span className="text-xs font-mono bg-cyan-950/60 text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/30">
+        <span className="text-xs font-mono bg-purple-950/60 text-purple-400 px-3 py-1 rounded-full border border-purple-500/30">
           SYSTEM HEALTH: 99.8%
         </span>
       </div>
