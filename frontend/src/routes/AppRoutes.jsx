@@ -11,24 +11,9 @@ import ForgotPassword from '../pages/auth/ForgotPassword';
 import OTPVerification from '../pages/auth/OTPVerification';
 
 // Layouts
-import AdminLayout from '../layouts/AdminLayout';
 import FishermanLayout from '../layouts/FishermanLayout';
 import FamilyLayout from '../layouts/FamilyLayout';
 import RescueLayout from '../layouts/RescueLayout';
-
-// Admin Pages
-import AdminDashboard from '../pages/admin/Dashboard';
-import AdminFishermen from '../pages/admin/Fishermen';
-import AdminFishermanDetails from '../pages/admin/FishermanDetails';
-import AdminFamilies from '../pages/admin/Families';
-import AdminBoats from '../pages/admin/Boats';
-import AdminBoatDetails from '../pages/admin/BoatDetails';
-import AdminLiveTracking from '../pages/admin/LiveTracking';
-import AdminEmergencies from '../pages/admin/Emergencies';
-import AdminRescueTeams from '../pages/admin/RescueTeams';
-import AdminAlerts from '../pages/admin/Alerts';
-import AdminReports from '../pages/admin/Reports';
-import AdminSettings from '../pages/admin/Settings';
 
 // Fisherman Pages
 import FishermanDashboard from '../pages/fisherman/Dashboard';
@@ -41,6 +26,9 @@ import FishermanLiveLocation from '../pages/fisherman/LiveLocation';
 import FishermanAlerts from '../pages/fisherman/Alerts';
 import FishermanEmergency from '../pages/fisherman/Emergency';
 import FishermanSettings from '../pages/fisherman/Settings';
+import FishermanCrew from '../pages/fisherman/Crew';
+import FishermanDocuments from '../pages/fisherman/Documents';
+import FishermanWeather from '../pages/fisherman/Weather';
 
 // Family Pages
 import FamilyDashboard from '../pages/family/Dashboard';
@@ -78,27 +66,14 @@ export default function AppRoutes() {
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/otp" element={<OTPVerification />} />
 
-      {/* Admin Portal Routes */}
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminDashboard />} />
-        <Route path="fishermen" element={<AdminFishermen />} />
-        <Route path="fishermen/:id" element={<AdminFishermanDetails />} />
-        <Route path="families" element={<AdminFamilies />} />
-        <Route path="boats" element={<AdminBoats />} />
-        <Route path="boats/:id" element={<AdminBoatDetails />} />
-        <Route path="tracking" element={<AdminLiveTracking />} />
-        <Route path="emergencies" element={<AdminEmergencies />} />
-        <Route path="rescue-teams" element={<AdminRescueTeams />} />
-        <Route path="alerts" element={<AdminAlerts />} />
-        <Route path="reports" element={<AdminReports />} />
-        <Route path="settings" element={<AdminSettings />} />
-      </Route>
-
       {/* Fisherman Portal Routes */}
       <Route path="/fisherman" element={<FishermanLayout />}>
         <Route index element={<FishermanDashboard />} />
         <Route path="profile" element={<FishermanProfile />} />
         <Route path="boat" element={<FishermanBoat />} />
+        <Route path="crew" element={<FishermanCrew />} />
+        <Route path="documents" element={<FishermanDocuments />} />
+        <Route path="weather" element={<FishermanWeather />} />
         <Route path="start-trip" element={<FishermanStartTrip />} />
         <Route path="active-trip" element={<FishermanActiveTrip />} />
         <Route path="history" element={<FishermanTripHistory />} />

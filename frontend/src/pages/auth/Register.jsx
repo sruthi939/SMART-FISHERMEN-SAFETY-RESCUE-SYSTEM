@@ -31,14 +31,24 @@ export default function Register() {
 
     try {
       const res = await authService.register(formProps);
-      const user = res.user || { name: formProps.name || roleName, role: roleName.toLowerCase() };
-      const token = res.token || 'jwt_sample_token';
-
-      login(user, token);
-      addNotification(`${roleName} Registration Successful! Redirecting...`, 'info');
-      setTimeout(() => {
-        navigate(redirectPath);
-      }, 800);
+      
+      if (res.isApproved) {
+        const user = res.user || { name: formProps.name || roleName, role: roleName.toLowerCase() };
+        const token = res.token || 'jwt_sample_token';
+        login(user, token);
+        addNotification(`${roleName} Registration Successful! Redirecting...`, 'info');
+        setTimeout(() => {
+          navigate(redirectPath);
+        }, 800);
+      } else {
+        addNotification(
+          `Registration Submitted! Account pending Government Admin verification. Please sign in after Admin approval.`,
+          'warning'
+        );
+        setTimeout(() => {
+          navigate('/auth/login');
+        }, 1500);
+      }
     } catch (err) {
       console.error('Registration error:', err);
       addNotification(err.message || 'Registration failed. Please try again.', 'error');
