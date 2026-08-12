@@ -1,34 +1,40 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import Footer from '../components/Footer';
-import { LayoutDashboard, Users, Anchor, Radio, AlertTriangle, ShieldAlert, FileText, Settings } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
 export default function AdminLayout() {
-  const links = [
-    { label: 'Dashboard', path: '/admin', exact: true, icon: LayoutDashboard },
-    { label: 'Fishermen & Approvals', path: '/admin/fishermen', icon: Users },
-    { label: 'Families', path: '/admin/families', icon: Users },
-    { label: 'Boats', path: '/admin/boats', icon: Anchor },
-    { label: 'Live Tracking', path: '/admin/tracking', icon: Radio },
-    { label: 'Emergencies', path: '/admin/emergencies', icon: ShieldAlert },
-    { label: 'Rescue Teams', path: '/admin/rescue-teams', icon: ShieldAlert },
-    { label: 'Alerts', path: '/admin/alerts', icon: AlertTriangle },
-    { label: 'Reports', path: '/admin/reports', icon: FileText },
-    { label: 'Settings', path: '/admin/settings', icon: Settings },
-  ];
+  const location = useLocation();
+
+  const getTitleFromPath = (pathname) => {
+    if (pathname.includes('/fishermen/')) return 'Fisherman Details';
+    if (pathname.includes('/fishermen')) return 'Fishermen';
+    if (pathname.includes('/boats/')) return 'Boat Details';
+    if (pathname.includes('/boats')) return 'Boats';
+    if (pathname.includes('/licenses')) return 'Licenses';
+    if (pathname.includes('/insurance')) return 'Insurance';
+    if (pathname.includes('/rescue-reports')) return 'Rescue Reports';
+    if (pathname.includes('/accident-reports')) return 'Accident Reports';
+    if (pathname.includes('/analytics')) return 'Analytics';
+    if (pathname.includes('/users')) return 'Users';
+    if (pathname.includes('/settings')) return 'Settings';
+    if (pathname.includes('/logs')) return 'Logs';
+    if (pathname.includes('/system-config')) return 'System Config';
+    if (pathname.includes('/profile')) return 'Profile';
+    return 'Dashboard';
+  };
+
+  const title = getTitleFromPath(location.pathname);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans">
-      <Navbar />
-      <div className="flex flex-1">
-        <Sidebar links={links} />
+    <div className="flex min-h-screen bg-[#f4f7fc] dark:bg-[#070d19] text-slate-800 dark:text-slate-100 font-sans selection:bg-blue-600 selection:text-white">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Navbar title={title} />
         <main className="flex-1 p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>
-      <Footer />
     </div>
   );
 }
