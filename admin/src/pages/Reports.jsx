@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '../../../frontend/src/components/Button';
+import Button from '../components/Button';
 
 export default function Reports() {
   return (

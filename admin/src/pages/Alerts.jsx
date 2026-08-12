@@ -1,5 +1,5 @@
 import React from 'react';
-import AlertCard from '../../../frontend/src/components/AlertCard';
+import AlertCard from '../components/AlertCard';
 
 export default function Alerts() {
   return (

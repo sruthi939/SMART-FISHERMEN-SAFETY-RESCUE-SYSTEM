@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import BoatCard from '../../../frontend/src/components/BoatCard';
-import Loader from '../../../frontend/src/components/Loader';
-import { boatService } from '../../../frontend/src/services/boatService';
+import BoatCard from '../components/BoatCard';
+import Loader from '../components/Loader';
+import { boatService } from '../services/boatService';
 
 export default function Boats() {
   const [boats, setBoats] = useState([]);

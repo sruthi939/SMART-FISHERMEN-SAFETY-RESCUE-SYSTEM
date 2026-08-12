@@ -9,6 +9,10 @@ export default function PortalSelection() {
 
   const handleSelectPortal = (role, path) => {
     login({ name: `${role} User`, role: role.toLowerCase() }, 'jwt_sample_token');
+    if (role.toLowerCase() === 'govt' || role.toLowerCase() === 'admin') {
+      window.location.href = 'http://localhost:3001/admin';
+      return;
+    }
     navigate(path);
   };
 
