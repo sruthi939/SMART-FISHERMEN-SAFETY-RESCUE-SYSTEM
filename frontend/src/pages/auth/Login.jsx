@@ -1,26 +1,38 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Anchor, ArrowRight } from 'lucide-react';
+import { Anchor, ArrowRight, Loader2 } from 'lucide-react';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotification } from '../../hooks/useNotification';
+import { authService } from '../../services/authService';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { addNotification } = useNotification();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate login based on role email or default to fisherman
-    let role = 'fisherman';
-    if (email.includes('admin')) role = 'admin';
-    if (email.includes('rescue')) role = 'rescue';
-    if (email.includes('family')) role = 'family';
+    setLoading(true);
 
-    login({ name: 'User', email, role }, 'sample_jwt_token');
-    navigate(`/${role}`);
+    try {
+      const res = await authService.login({ email, password });
+      const user = res.user || { name: email.split('@')[0], email, role: 'fisherman' };
+      const token = res.token || 'sample_token';
+      
+      login(user, token);
+      addNotification(`Welcome back, ${user.name}!`, 'info');
+      navigate(`/${user.role || 'fisherman'}`);
+    } catch (err) {
+      console.error('Login error:', err);
+      addNotification(err.message || 'Login failed. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,14 +54,28 @@ export default function Login() {
             <Link to="/auth/forgot-password" className="text-cyan-400 hover:underline">Forgot password?</Link>
           </div>
 
-          <Button type="submit" className="w-full py-2.5 mt-2">
-            <span>Sign In</span>
-            <ArrowRight size={16} />
+          <Button type="submit" disabled={loading} className="w-full py-2.5 mt-2">
+            {loading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Signing In...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In</span>
+                <ArrowRight size={16} />
+              </>
+            )}
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-slate-400">
-          Don't have an account? <Link to="/auth/register" className="text-cyan-400 font-semibold hover:underline">Register here</Link>
+        <div className="mt-6 text-center text-xs text-slate-400 flex flex-col gap-2">
+          <div>
+            Don't have an account? <Link to="/auth/register" className="text-cyan-400 font-semibold hover:underline">Register here</Link>
+          </div>
+          <Link to="/" className="text-slate-500 hover:text-slate-300 font-medium text-[11px] underline">
+            ← Back to Portal Selection Gateway
+          </Link>
         </div>
       </div>
     </div>

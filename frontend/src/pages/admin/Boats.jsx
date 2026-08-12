@@ -1,17 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import BoatCard from '../../components/BoatCard';
+import Loader from '../../components/Loader';
+import { boatService } from '../../services/boatService';
 
 export default function Boats() {
-  const boats = [
-    { name: 'Sea Harrier IV', regNumber: 'IND-KL-07-8821', speed: '12.4', battery: '94', status: 'Active' },
-    { name: 'Ocean Star 2', regNumber: 'IND-KL-07-3312', speed: '0.0', battery: '100', status: 'Safe' },
-  ];
+  const [boats, setBoats] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBoats();
+  }, []);
+
+  const fetchBoats = async () => {
+    try {
+      const res = await boatService.getAll();
+      setBoats(res.boats || []);
+    } catch (err) {
+      console.error('Error fetching boats:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <Loader text="Loading Vessels Database..." />;
 
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-extrabold text-white">Registered Vessels Database</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {boats.map((b, idx) => <BoatCard key={idx} boat={b} />)}
+        {boats.map((b) => <BoatCard key={b.id || b.name} boat={b} />)}
       </div>
     </div>
   );

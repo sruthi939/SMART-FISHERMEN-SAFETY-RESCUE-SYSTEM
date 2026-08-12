@@ -1,6 +1,9 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
+// Portal Selection Gateway
+import PortalSelection from '../pages/PortalSelection';
+
 // Auth Pages
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
@@ -65,8 +68,9 @@ import RescueProfile from '../pages/rescue/Profile';
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Root redirect */}
-      <Route path="/" element={<Navigate to="/auth/login" replace />} />
+      {/* Root Portal Gateway */}
+      <Route path="/" element={<PortalSelection />} />
+      <Route path="/portals" element={<PortalSelection />} />
 
       {/* Auth Routes */}
       <Route path="/auth/login" element={<Login />} />
