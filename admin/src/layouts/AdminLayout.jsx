@@ -27,11 +27,11 @@ export default function AdminLayout() {
   const title = getTitleFromPath(location.pathname);
 
   return (
-    <div className="flex min-h-screen bg-[#f4f7fc] dark:bg-[#070d19] text-slate-800 dark:text-slate-100 font-sans selection:bg-blue-600 selection:text-white">
+    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans selection:bg-blue-600 selection:text-white">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar title={title} />
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-6 overflow-y-auto bg-[#f8fafc]">
           <Outlet />
         </main>
       </div>

@@ -4,7 +4,7 @@ import Loader from '../components/Loader';
 import { authService } from '../services/authService';
 
 export default function Users() {
-  const [roleTab, setRoleTab] = useState('all'); // 'all' | 'fisherman' | 'family' | 'rescue' | 'admin'
+  const [roleTab, setRoleTab] = useState('all');
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([
     { id: '1', name: 'Arun Kumar', email: 'arun@gmail.com', role: 'Fisherman', phone: '+91 98765 43210', status: 'Active' },
@@ -48,9 +48,9 @@ export default function Users() {
   if (loading) return <Loader text="Loading System User Accounts..." />;
 
   return (
-    <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
+    <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
       {/* Sub-tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 text-xs font-bold overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3 text-xs font-bold overflow-x-auto">
         {[
           { key: 'all', label: 'All Users' },
           { key: 'fisherman', label: 'Fishermen' },
@@ -64,7 +64,7 @@ export default function Users() {
             className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
               roleTab === t.key
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
             {t.label}
@@ -74,7 +74,7 @@ export default function Users() {
 
       {/* Header Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h2 className="text-sm font-bold text-slate-900 dark:text-white">Registered Users ({filtered.length})</h2>
+        <h2 className="text-sm font-bold text-slate-900">Registered Users ({filtered.length})</h2>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
@@ -84,11 +84,11 @@ export default function Users() {
               placeholder="Search users by name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white text-xs pl-8 pr-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-500 transition"
+              className="w-full bg-slate-50 text-slate-900 text-xs pl-8 pr-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 transition"
             />
           </div>
 
-          <button className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 rounded-lg transition">
+          <button className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 rounded-lg transition">
             <Download size={14} />
             <span>Export</span>
           </button>
@@ -101,9 +101,9 @@ export default function Users() {
       </div>
 
       {/* User Table */}
-      <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+      <div className="overflow-x-auto border border-slate-200 rounded-lg">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
+          <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
             <tr>
               <th className="p-3">Name</th>
               <th className="p-3">Email</th>
@@ -113,13 +113,13 @@ export default function Users() {
               <th className="p-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+          <tbody className="divide-y divide-slate-200 text-slate-800">
             {filtered.map((u, i) => (
-              <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+              <tr key={i} className="hover:bg-slate-50 transition">
                 <td className="p-3 font-bold">{u.name}</td>
                 <td className="p-3 text-slate-500 font-mono">{u.email}</td>
                 <td className="p-3">
-                  <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
+                  <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-bold text-[10px]">
                     {u.role}
                   </span>
                 </td>
@@ -127,17 +127,17 @@ export default function Users() {
                 <td className="p-3">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
                     u.status === 'Active'
-                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border-emerald-500/40'
-                      : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 border-amber-500/40'
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-500/30'
+                      : 'bg-amber-50 text-amber-600 border-amber-500/30'
                   }`}>
                     {u.status}
                   </span>
                 </td>
                 <td className="p-3 text-right">
                   <div className="flex items-center justify-end gap-2 text-slate-400">
-                    <button title="View" className="hover:text-blue-500 p-1"><Eye size={16} /></button>
-                    <button title="Edit" className="hover:text-amber-500 p-1"><Edit size={16} /></button>
-                    <button title="Delete" className="hover:text-red-500 p-1"><Trash2 size={16} /></button>
+                    <button title="View" className="hover:text-blue-600 p-1"><Eye size={16} /></button>
+                    <button title="Edit" className="hover:text-amber-600 p-1"><Edit size={16} /></button>
+                    <button title="Delete" className="hover:text-red-600 p-1"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>

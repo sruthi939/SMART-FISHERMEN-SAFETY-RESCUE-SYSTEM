@@ -52,10 +52,10 @@ export default function Boats() {
   if (loading) return <Loader text="Loading Registered Vessels Database..." />;
 
   return (
-    <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
+    <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
       {/* Search & Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h2 className="text-sm font-bold text-slate-900 dark:text-white">Registered Boats ({boats.length})</h2>
+        <h2 className="text-sm font-bold text-slate-900">Registered Boats ({boats.length})</h2>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
@@ -65,11 +65,11 @@ export default function Boats() {
               placeholder="Search Boats by name or registration..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white text-xs pl-8 pr-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-500 transition"
+              className="w-full bg-slate-50 text-slate-900 text-xs pl-8 pr-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 transition"
             />
           </div>
 
-          <button className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 rounded-lg transition">
+          <button className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 rounded-lg transition">
             <Download size={14} />
             <span>Export</span>
           </button>
@@ -82,9 +82,9 @@ export default function Boats() {
       </div>
 
       {/* Vessels Table */}
-      <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+      <div className="overflow-x-auto border border-slate-200 rounded-lg">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
+          <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
             <tr>
               <th className="p-3">Reg. No.</th>
               <th className="p-3">Boat Name</th>
@@ -95,32 +95,32 @@ export default function Boats() {
               <th className="p-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+          <tbody className="divide-y divide-slate-200 text-slate-800">
             {filteredBoats.map((boat, idx) => (
-              <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-                <td className="p-3 font-mono font-bold text-blue-600 dark:text-blue-400">{boat.regNo}</td>
+              <tr key={idx} className="hover:bg-slate-50 transition">
+                <td className="p-3 font-mono font-bold text-blue-600">{boat.regNo}</td>
                 <td className="p-3 font-bold">{boat.name}</td>
                 <td className="p-3">{boat.owner}</td>
                 <td className="p-3">{boat.type}</td>
                 <td className="p-3 font-mono text-slate-500">{boat.length}</td>
                 <td className="p-3">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
                     boat.status === 'Active'
-                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border-emerald-500/40'
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-500/30'
                       : boat.status === 'Under Maintenance'
-                      ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 border-amber-500/40'
-                      : 'bg-red-50 dark:bg-red-950/60 text-red-600 border-red-500/40'
+                      ? 'bg-amber-50 text-amber-600 border-amber-500/30'
+                      : 'bg-red-50 text-red-600 border-red-500/30'
                   }`}>
                     {boat.status}
                   </span>
                 </td>
                 <td className="p-3 text-right">
                   <div className="flex items-center justify-end gap-2 text-slate-400">
-                    <Link to={`/admin/boats/${boat.regNo}`} title="View Boat Details" className="hover:text-blue-500 p-1">
+                    <Link to={`/admin/boats/${boat.regNo}`} title="View Boat Details" className="hover:text-blue-600 p-1">
                       <Eye size={16} />
                     </Link>
-                    <button title="Edit" className="hover:text-amber-500 p-1"><Edit size={16} /></button>
-                    <button title="Delete" className="hover:text-red-500 p-1"><Trash2 size={16} /></button>
+                    <button title="Edit" className="hover:text-amber-600 p-1"><Edit size={16} /></button>
+                    <button title="Delete" className="hover:text-red-600 p-1"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>

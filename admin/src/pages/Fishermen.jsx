@@ -8,7 +8,7 @@ import { useNotification } from '../hooks/useNotification';
 
 export default function Fishermen() {
   const [search, setSearch] = useState('');
-  const [tab, setTab] = useState('registered'); // 'registered' | 'pending'
+  const [tab, setTab] = useState('registered');
   const [fishermen, setFishermen] = useState([
     { id: 'FSH1001', name: 'Arun Kumar', phone: '+91 98765 43210', district: 'Ramanathapuram', licenseNo: 'LIC-2024-1001', status: 'Active' },
     { id: 'FSH1002', name: 'Manoj S.', phone: '+91 87654 32109', district: 'Thoothukudi', licenseNo: 'LIC-2024-1002', status: 'Active' },
@@ -83,7 +83,7 @@ export default function Fishermen() {
   if (loading) return <Loader text="Loading Fishermen Registry..." />;
 
   return (
-    <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
+    <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
       {/* Top Header & Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function Fishermen() {
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
               tab === 'registered'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             Registered Directory ({fishermen.length})
@@ -102,7 +102,7 @@ export default function Fishermen() {
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
               tab === 'pending'
                 ? 'bg-amber-500 text-slate-950 shadow-xs'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             <Clock size={14} />
@@ -118,11 +118,11 @@ export default function Fishermen() {
               placeholder="Search Fishermen by name, ID or phone..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white text-xs pl-8 pr-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-500 transition"
+              className="w-full bg-slate-50 text-slate-900 text-xs pl-8 pr-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 transition"
             />
           </div>
 
-          <button className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 rounded-lg transition">
+          <button className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 rounded-lg transition">
             <Download size={14} />
             <span>Export</span>
           </button>
@@ -135,9 +135,9 @@ export default function Fishermen() {
       </div>
 
       {tab === 'registered' ? (
-        <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+        <div className="overflow-x-auto border border-slate-200 rounded-lg">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
+            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
               <tr>
                 <th className="p-3">ID</th>
                 <th className="p-3">Name</th>
@@ -148,32 +148,32 @@ export default function Fishermen() {
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+            <tbody className="divide-y divide-slate-200 text-slate-800">
               {filteredFishermen.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-                  <td className="p-3 font-mono font-bold text-blue-600 dark:text-blue-400">{item.id}</td>
+                <tr key={item.id} className="hover:bg-slate-50 transition">
+                  <td className="p-3 font-mono font-bold text-blue-600">{item.id}</td>
                   <td className="p-3 font-bold">{item.name}</td>
                   <td className="p-3 font-mono text-slate-500">{item.phone}</td>
                   <td className="p-3">{item.district}</td>
-                  <td className="p-3 font-mono text-slate-400">{item.licenseNo}</td>
+                  <td className="p-3 font-mono text-slate-500">{item.licenseNo}</td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
                       item.status === 'Active'
-                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border-emerald-500/40'
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-500/30'
                         : item.status === 'Expired'
-                        ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 border-amber-500/40'
-                        : 'bg-red-50 dark:bg-red-950/60 text-red-600 border-red-500/40'
+                        ? 'bg-amber-50 text-amber-600 border-amber-500/30'
+                        : 'bg-red-50 text-red-600 border-red-500/30'
                     }`}>
                       {item.status}
                     </span>
                   </td>
                   <td className="p-3 text-right">
                     <div className="flex items-center justify-end gap-2 text-slate-400">
-                      <Link to={`/admin/fishermen/${item.id}`} title="View Details" className="hover:text-blue-500 p-1">
+                      <Link to={`/admin/fishermen/${item.id}`} title="View Details" className="hover:text-blue-600 p-1">
                         <Eye size={16} />
                       </Link>
-                      <button title="Edit" className="hover:text-amber-500 p-1"><Edit size={16} /></button>
-                      <button title="Delete" className="hover:text-red-500 p-1"><Trash2 size={16} /></button>
+                      <button title="Edit" className="hover:text-amber-600 p-1"><Edit size={16} /></button>
+                      <button title="Delete" className="hover:text-red-600 p-1"><Trash2 size={16} /></button>
                     </div>
                   </td>
                 </tr>
@@ -183,17 +183,17 @@ export default function Fishermen() {
         </div>
       ) : (
         <div className="space-y-3">
-          <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider">Verification Queue</h3>
+          <h3 className="text-xs font-bold text-amber-600 uppercase tracking-wider">Verification Queue</h3>
           {pendingUsers.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-400 border border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="p-6 text-center text-xs text-slate-400 border border-slate-200 rounded-lg">
               No pending registrations at this time.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {pendingUsers.map(u => (
-                <div key={u.id} className="p-4 border border-amber-500/30 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 text-xs flex flex-col justify-between gap-3">
+                <div key={u.id} className="p-4 border border-amber-500/30 rounded-lg bg-amber-50/40 text-xs flex flex-col justify-between gap-3">
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white text-sm">{u.name}</span>
+                    <span className="font-bold text-slate-900 text-sm">{u.name}</span>
                     <p className="text-slate-500 mt-1">Email: {u.email} | Role: <span className="font-bold uppercase text-amber-600">{u.role}</span></p>
                   </div>
                   <div className="flex items-center gap-2">
