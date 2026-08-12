@@ -15,24 +15,6 @@ export const authService = {
     });
   },
 
-  forgotPassword: async (email) => {
-    return apiRequest('/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
-  },
-
-  verifyOTP: async (data) => {
-    return apiRequest('/auth/verify-otp', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-
-  getCurrentUser: async () => {
-    return apiRequest('/auth/me');
-  },
-
   getPendingUsers: async () => {
     return apiRequest('/admin/pending-users');
   },

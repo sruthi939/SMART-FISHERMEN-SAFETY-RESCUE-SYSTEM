@@ -1,5 +1,5 @@
 import React from 'react';
-import Map from '../../components/Map';
+import Map from '../../../frontend/src/components/Map';
 
 export default function LiveTracking() {
   return (

@@ -1,6 +1,6 @@
 import React from 'react';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
+import Input from '../../../frontend/src/components/Input';
+import Button from '../../../frontend/src/components/Button';
 
 export default function Settings() {
   return (

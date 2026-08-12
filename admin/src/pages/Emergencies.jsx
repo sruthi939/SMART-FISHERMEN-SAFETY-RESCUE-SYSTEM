@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import EmergencyCard from '../../components/EmergencyCard';
-import Loader from '../../components/Loader';
-import { emergencyService } from '../../services/emergencyService';
-import { useNotification } from '../../hooks/useNotification';
+import EmergencyCard from '../../../frontend/src/components/EmergencyCard';
+import Loader from '../../../frontend/src/components/Loader';
+import { emergencyService } from '../../../frontend/src/services/emergencyService';
+import { useNotification } from '../../../frontend/src/hooks/useNotification';
 
 export default function Emergencies() {
   const [emergencies, setEmergencies] = useState([]);

@@ -1,15 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Anchor, 
-  Heart, 
-  ShieldAlert, 
-  Building2, 
-  LifeBuoy, 
-  Lock, 
-  ShieldCheck, 
-  ArrowRight 
-} from 'lucide-react';
+import { Anchor, Heart, ShieldAlert, Building2, LifeBuoy, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 export default function PortalSelection() {
@@ -66,12 +57,12 @@ export default function PortalSelection() {
 
   return (
     <div className="min-h-screen bg-[#050b14] text-slate-100 flex flex-col justify-between py-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-cyan-500 selection:text-slate-950 relative overflow-hidden">
-      
+
       {/* Background Radial Glow Effect */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-6xl mx-auto w-full relative z-10 my-auto">
-        
+
         {/* Top Header Section */}
         <div className="flex flex-col items-center text-center mb-12">
           <div className="w-16 h-16 rounded-2xl bg-[#0c1a2e] border border-cyan-500/30 text-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/20 mb-6">
