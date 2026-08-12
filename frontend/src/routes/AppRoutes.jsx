@@ -29,6 +29,7 @@ import FishermanSettings from '../pages/fisherman/Settings';
 import FishermanCrew from '../pages/fisherman/Crew';
 import FishermanDocuments from '../pages/fisherman/Documents';
 import FishermanWeather from '../pages/fisherman/Weather';
+import FishermanMessages from '../pages/fisherman/Messages';
 
 // Family Pages
 import FamilyDashboard from '../pages/family/Dashboard';
@@ -74,6 +75,7 @@ export default function AppRoutes() {
         <Route path="crew" element={<FishermanCrew />} />
         <Route path="documents" element={<FishermanDocuments />} />
         <Route path="weather" element={<FishermanWeather />} />
+        <Route path="messages" element={<FishermanMessages />} />
         <Route path="start-trip" element={<FishermanStartTrip />} />
         <Route path="active-trip" element={<FishermanActiveTrip />} />
         <Route path="history" element={<FishermanTripHistory />} />
