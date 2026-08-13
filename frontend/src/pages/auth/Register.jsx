@@ -191,6 +191,19 @@ export default function Register() {
                   </div>
                 </div>
 
+                <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-lg space-y-1.5 text-xs">
+                  <label className="text-slate-300 font-bold flex items-center gap-1.5 text-[11px]">
+                    <Upload size={14} className="text-cyan-400" />
+                    <span>Attach Vessel / Fishing Document (Optional during registration)</span>
+                  </label>
+                  <input
+                    name="documentFile"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-cyan-500 file:text-slate-950"
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-3 text-slate-500" />

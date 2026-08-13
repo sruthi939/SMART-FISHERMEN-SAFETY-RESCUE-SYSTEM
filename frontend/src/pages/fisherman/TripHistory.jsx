@@ -1,13 +1,31 @@
-import React from 'react';
-import { History, Navigation } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { History } from 'lucide-react';
+import Loader from '../../components/Loader';
+import { tripService } from '../../services/tripService';
 
 export default function TripHistory() {
-  const previousTrips = [
-    { startDate: 'May 10, 2025', endDate: 'May 12, 2025', distance: '52.3 km', duration: '24h 10m', status: 'Completed' },
-    { startDate: 'May 07, 2025', endDate: 'May 09, 2025', distance: '48.6 km', duration: '23h 45m', status: 'Completed' },
-    { startDate: 'May 04, 2025', endDate: 'May 06, 2025', distance: '50.1 km', duration: '24h 30m', status: 'Completed' },
-    { startDate: 'May 01, 2025', endDate: 'May 03, 2025', distance: '47.8 km', duration: '22h 50m', status: 'Completed' },
-  ];
+  const [trips, setTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAllModal, setShowAllModal] = useState(false);
+
+  useEffect(() => {
+    fetchTrips();
+  }, []);
+
+  const fetchTrips = async () => {
+    try {
+      const res = await tripService.getTrips();
+      setTrips(res.trips || []);
+    } catch (err) {
+      console.error('Error fetching trips:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <Loader text="Loading Voyage & GPS Telemetry History..." />;
+
+  const activeTrip = trips.find(t => t.status === 'ACTIVE') || trips[0];
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -44,22 +62,26 @@ export default function TripHistory() {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
               <tr>
-                <th className="p-3">Start Date</th>
-                <th className="p-3">End Date</th>
-                <th className="p-3">Distance</th>
+                <th className="p-3">Boat Name</th>
+                <th className="p-3">Captain</th>
+                <th className="p-3">Sector</th>
                 <th className="p-3">Duration</th>
                 <th className="p-3">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-800">
-              {previousTrips.map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50 transition">
-                  <td className="p-3 font-semibold">{item.startDate}</td>
-                  <td className="p-3 font-semibold">{item.endDate}</td>
-                  <td className="p-3 font-mono">{item.distance}</td>
-                  <td className="p-3 font-mono">{item.duration}</td>
+              {trips.map((item, idx) => (
+                <tr key={item.id || idx} className="hover:bg-slate-50 transition">
+                  <td className="p-3 font-semibold">{item.boatName}</td>
+                  <td className="p-3 font-semibold">{item.captainName}</td>
+                  <td className="p-3 font-mono">{item.sector || 'Sector 4B'}</td>
+                  <td className="p-3 font-mono">{item.durationHours || 24} hrs</td>
                   <td className="p-3">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-600 border border-emerald-500/30">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                      item.status === 'ACTIVE'
+                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-500/30'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}>
                       {item.status}
                     </span>
                   </td>
@@ -69,10 +91,55 @@ export default function TripHistory() {
           </table>
         </div>
 
-        <button className="text-xs text-blue-600 font-bold hover:underline block text-center w-full pt-2">
+        <button
+          onClick={() => setShowAllModal(true)}
+          className="text-xs text-blue-600 font-bold hover:underline block text-center w-full pt-2"
+        >
           View All Trips
         </button>
       </div>
+
+      {/* View All Trips Modal */}
+      {showAllModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xl max-w-xl w-full space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900">Complete Historical Voyage Log</h3>
+              <button onClick={() => setShowAllModal(false)} className="text-slate-400 hover:text-slate-700 font-bold text-sm">✕</button>
+            </div>
+
+            <div className="overflow-x-auto border border-slate-100 rounded-lg max-h-64 overflow-y-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="p-2.5">Boat</th>
+                    <th className="p-2.5">Sector</th>
+                    <th className="p-2.5">Duration</th>
+                    <th className="p-2.5">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {trips.map((t, idx) => (
+                    <tr key={idx}>
+                      <td className="p-2.5 font-bold">{t.boatName}</td>
+                      <td className="p-2.5 text-blue-600">{t.sector || 'Sector 4B'}</td>
+                      <td className="p-2.5 font-mono">{t.durationHours || 24} h</td>
+                      <td className="p-2.5 font-extrabold">{t.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              onClick={() => setShowAllModal(false)}
+              className="w-full py-2 bg-slate-100 text-slate-700 font-bold rounded-lg text-xs"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
