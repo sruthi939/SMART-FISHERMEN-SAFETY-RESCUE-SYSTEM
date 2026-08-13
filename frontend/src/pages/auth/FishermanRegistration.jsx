@@ -67,8 +67,26 @@ export default function FishermanRegistration() {
     });
   };
 
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      const cleanAadhaar = (formData.aadhaar || '').replace(/\D/g, '');
+      if (cleanAadhaar.length !== 12) {
+        addNotification('Aadhaar Number must contain exactly 12 numeric digits (e.g. 987654321012)!', 'error');
+        return;
+      }
+    }
+    setCurrentStep(prev => prev + 1);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const cleanAadhaar = (formData.aadhaar || '').replace(/\D/g, '');
+    if (cleanAadhaar.length !== 12) {
+      addNotification('Aadhaar Number must contain exactly 12 numeric digits!', 'error');
+      setCurrentStep(1);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       addNotification('Passwords do not match!', 'error');
       return;
@@ -78,6 +96,7 @@ export default function FishermanRegistration() {
     try {
       const payload = {
         ...formData,
+        aadhaar: cleanAadhaar,
         role: 'fisherman'
       };
 
@@ -222,7 +241,7 @@ export default function FishermanRegistration() {
             <div className="flex flex-col items-center gap-1 z-10">
               <div className={`w-8 h-8 rounded-full font-black flex items-center justify-center transition ${currentStep >= 4 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'bg-slate-100 text-slate-400'
                 }`}>4</div>
-              <span className={`font-bold text-[11px] ${currentStep >= 4 ? 'text-blue-600' : 'text-slate-400'}`}>Review</span>
+              <span className={`font-bold text-[11px] ${currentStep >= 4 ? 'text-blue-600' : 'text-slate-400'}`}>Admin Approval</span>
             </div>
           </div>
 
@@ -304,17 +323,21 @@ export default function FishermanRegistration() {
                     </div>
 
                     <div>
-                      <label className="block text-slate-700 font-bold mb-1">Aadhaar Number *</label>
+                      <label className="block text-slate-700 font-bold mb-1">Aadhaar Number * <span className="text-[10px] text-slate-400 font-normal">(12 Digits)</span></label>
                       <div className="relative">
                         <CreditCard size={16} className="absolute left-3 top-2.5 text-slate-400" />
                         <input
                           name="aadhaar"
                           type="text"
+                          maxLength={12}
                           placeholder="Enter 12 digit Aadhaar number"
                           value={formData.aadhaar}
-                          onChange={handleChange}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 12);
+                            setFormData(prev => ({ ...prev, aadhaar: val }));
+                          }}
                           required
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-slate-900 focus:outline-none focus:border-blue-500"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-slate-900 focus:outline-none focus:border-blue-500 font-mono"
                         />
                       </div>
                     </div>
@@ -681,33 +704,53 @@ export default function FishermanRegistration() {
               </div>
             )}
 
-            {/* STEP 4: Review */}
+            {/* STEP 4: Admin Approval & Review */}
             {currentStep === 4 && (
               <div className="space-y-4 text-xs">
-                <h3 className="font-black text-slate-900 text-sm text-blue-600">Review Application Summary</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-black text-slate-900 text-sm text-blue-600 flex items-center gap-2">
+                    <ShieldCheck size={18} /> 4. Government Admin Approval & Review
+                  </h3>
+                  <span className="px-2.5 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-extrabold rounded-full border border-amber-300 uppercase">
+                    ⏳ Pending Admin Approval
+                  </span>
+                </div>
 
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                  <div className="flex justify-between border-b border-slate-200 pb-1">
-                    <span className="text-slate-500">Applicant:</span>
-                    <strong className="text-slate-900">{formData.name || 'Not specified'}</strong>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-200 pb-1">
-                    <span className="text-slate-500">Phone & Email:</span>
-                    <strong className="text-slate-900">{formData.phone} | {formData.email}</strong>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-200 pb-1">
-                    <span className="text-slate-500">Aadhaar:</span>
-                    <strong className="text-slate-900">{formData.aadhaar}</strong>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-200 pb-1">
-                    <span className="text-slate-500">Boat:</span>
-                    <strong className="text-slate-900">{formData.boatName || 'Sea Queen'} ({formData.boatRegNumber || 'TN 07 MF 4587'})</strong>
+                  <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1">Application Details Summary</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div><span className="text-slate-400">Applicant:</span> <strong className="text-slate-900">{formData.name || 'Arun Kumar'}</strong></div>
+                    <div><span className="text-slate-400">Phone & Email:</span> <strong className="text-slate-900">{formData.phone} | {formData.email}</strong></div>
+                    <div><span className="text-slate-400">Aadhaar:</span> <strong className="text-slate-900">{formData.aadhaar}</strong></div>
+                    <div><span className="text-slate-400">District & State:</span> <strong className="text-slate-900">{formData.district || 'Rameswaram'}, {formData.state || 'Tamil Nadu'}</strong></div>
+                    <div><span className="text-slate-400">Boat Name & Reg:</span> <strong className="text-slate-900">{formData.boatName || 'Sea Queen'} ({formData.boatRegNumber || 'TN 07 MF 4587'})</strong></div>
+                    <div><span className="text-slate-400">Experience:</span> <strong className="text-slate-900">{formData.experience || '12 Years'} ({formData.primaryFishingArea || 'Palk Bay'})</strong></div>
                   </div>
                 </div>
 
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs">
-                  <strong>Notice:</strong> Your registration application will be sent to the Government Fisheries Administrator for verification. Portal access is granted upon Admin approval.
+                {/* Admin Approval Notice Banner */}
+                <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-xl text-amber-950 space-y-1.5 shadow-xs">
+                  <div className="flex items-center gap-2 font-bold text-xs text-amber-900">
+                    <ShieldCheck size={18} className="text-amber-600 shrink-0" />
+                    <span>Government Admin Verification Required</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-amber-800">
+                    Submitting this form routes your registration directly to the <strong>Government Fisheries Administrator Approval Queue</strong>. Once the Admin reviews and approves your maritime credentials in the Admin Portal, you can log in to access your Fisherman Portal Dashboard.
+                  </p>
                 </div>
+
+                {/* Declaration Checkbox */}
+                <label className="flex items-start gap-2.5 p-3 bg-blue-50/60 border border-blue-100 rounded-xl cursor-pointer text-[11px] text-slate-700">
+                  <input
+                    type="checkbox"
+                    required
+                    defaultChecked
+                    className="mt-0.5 rounded text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>
+                    I declare that all provided personal, vessel, and license details are accurate and understand that portal access is subject to official Government Admin approval.
+                  </span>
+                </label>
               </div>
             )}
 
@@ -735,7 +778,7 @@ export default function FishermanRegistration() {
               {currentStep < 4 ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(prev => prev + 1)}
+                  onClick={handleNextStep}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm shadow-blue-600/30 transition flex items-center gap-1.5"
                 >
                   <span>Next Step</span>
