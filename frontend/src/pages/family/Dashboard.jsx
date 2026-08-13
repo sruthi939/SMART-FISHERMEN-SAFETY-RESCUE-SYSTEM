@@ -6,6 +6,7 @@ import Loader from '../../components/Loader';
 import { useAuth } from '../../hooks/useAuth';
 import { familyService } from '../../services/familyService';
 import { alertService } from '../../services/alertService';
+import { tripService } from '../../services/tripService';
 
 export default function FamilyDashboard() {
   const { user } = useAuth();
@@ -14,13 +15,15 @@ export default function FamilyDashboard() {
   const [loading, setLoading] = useState(true);
   const [linkedFishermen, setLinkedFishermen] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [trips, setTrips] = useState([]);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [fishRes, alertRes] = await Promise.all([
+        const [fishRes, alertRes, tripRes] = await Promise.all([
           familyService.getLinkedFishermen().catch(() => ({ linkedFishermen: [] })),
-          alertService.getAlerts().catch(() => ({ alerts: [] }))
+          alertService.getAlerts().catch(() => ({ alerts: [] })),
+          tripService.getTrips().catch(() => ({ trips: [] }))
         ]);
 
         if (fishRes.linkedFishermen) {
@@ -28,6 +31,9 @@ export default function FamilyDashboard() {
         }
         if (alertRes.alerts) {
           setAlerts(alertRes.alerts);
+        }
+        if (tripRes.trips) {
+          setTrips(tripRes.trips);
         }
       } catch (err) {
         console.error('Failed to load family dashboard data:', err);
@@ -42,8 +48,10 @@ export default function FamilyDashboard() {
     return <Loader text="Loading Family Safety Telemetry..." />;
   }
 
-  const activeCount = linkedFishermen.filter(f => f.status === 'On Trip').length;
-  const safeCount = linkedFishermen.filter(f => f.status === 'Returned' || f.status === 'Safe').length;
+  const totalCount = linkedFishermen.length;
+  const activeCount = linkedFishermen.filter(f => f.status === 'On Trip' || f.status === 'ACTIVE').length;
+  const safeCount = linkedFishermen.filter(f => f.status === 'Returned' || f.status === 'Safe' || f.status === 'COMPLETED').length;
+  const dangerCount = linkedFishermen.filter(f => f.status === 'DISTRESS' || f.status === 'SOS').length;
 
   return (
     <div className="space-y-6 font-sans">
@@ -55,7 +63,7 @@ export default function FamilyDashboard() {
         </div>
       </div>
 
-      {/* 4 Summary Stat Cards */}
+      {/* 4 Dynamic Summary Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200/80 rounded-xl p-4 shadow-xs flex items-center gap-3.5">
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold shrink-0">
@@ -63,7 +71,7 @@ export default function FamilyDashboard() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-400 block">Fishermen</span>
-            <strong className="text-xl font-black text-slate-900 font-mono">0{linkedFishermen.length || 2}</strong>
+            <strong className="text-xl font-black text-slate-900 font-mono">{String(totalCount).padStart(2, '0')}</strong>
           </div>
         </div>
 
@@ -73,7 +81,7 @@ export default function FamilyDashboard() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-400 block">On Trip</span>
-            <strong className="text-xl font-black text-slate-900 font-mono">0{activeCount || 1}</strong>
+            <strong className="text-xl font-black text-slate-900 font-mono">{String(activeCount).padStart(2, '0')}</strong>
           </div>
         </div>
 
@@ -83,7 +91,7 @@ export default function FamilyDashboard() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-400 block">Safe</span>
-            <strong className="text-xl font-black text-slate-900 font-mono">0{safeCount || 1}</strong>
+            <strong className="text-xl font-black text-slate-900 font-mono">{String(safeCount).padStart(2, '0')}</strong>
           </div>
         </div>
 
@@ -93,7 +101,7 @@ export default function FamilyDashboard() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-400 block">In Danger</span>
-            <strong className="text-xl font-black text-slate-900 font-mono">00</strong>
+            <strong className="text-xl font-black text-slate-900 font-mono">{String(dangerCount).padStart(2, '0')}</strong>
           </div>
         </div>
       </div>
@@ -111,7 +119,7 @@ export default function FamilyDashboard() {
 
           <Map title="Palk Bay Live Vessel Tracker (Linked Fishermen)" />
 
-          {/* Active Vessels Bar */}
+          {/* Dynamic Active Vessels Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
             {linkedFishermen.map((fish) => (
               <div key={fish.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
@@ -128,7 +136,7 @@ export default function FamilyDashboard() {
           </div>
         </div>
 
-        {/* Recent Alerts Card */}
+        {/* Dynamic Recent Alerts Card */}
         <div className="lg:col-span-4 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
@@ -138,29 +146,15 @@ export default function FamilyDashboard() {
           </div>
 
           <div className="space-y-3 text-xs">
-            <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-xl space-y-1">
-              <div className="flex items-center justify-between">
-                <strong className="text-amber-900 font-bold">Low Fuel Warning</strong>
-                <span className="text-[10px] text-slate-400 font-mono">10:45 AM</span>
+            {alerts.slice(0, 3).map((item) => (
+              <div key={item.id} className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1">
+                <div className="flex items-center justify-between">
+                  <strong className="text-blue-900 font-bold">{item.title}</strong>
+                  <span className="text-[10px] text-slate-400 font-mono">{item.time || 'Today'}</span>
+                </div>
+                <p className="text-[11px] text-blue-800">{item.message || item.desc}</p>
               </div>
-              <p className="text-[11px] text-amber-800">Sea Queen (Manu)</p>
-            </div>
-
-            <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1">
-              <div className="flex items-center justify-between">
-                <strong className="text-blue-900 font-bold">Weather Update</strong>
-                <span className="text-[10px] text-slate-400 font-mono">08:30 AM</span>
-              </div>
-              <p className="text-[11px] text-blue-800">Moderate winds in your area</p>
-            </div>
-
-            <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl space-y-1">
-              <div className="flex items-center justify-between">
-                <strong className="text-emerald-900 font-bold">Safe Return</strong>
-                <span className="text-[10px] text-slate-400 font-mono">Yesterday</span>
-              </div>
-              <p className="text-[11px] text-emerald-800">Blue Wave (Ramesh)</p>
-            </div>
+            ))}
           </div>
         </div>
       </div>
@@ -174,21 +168,15 @@ export default function FamilyDashboard() {
           </h2>
 
           <div className="space-y-3 text-xs">
-            <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
-              <div>
-                <strong className="text-slate-900 font-bold block">Sea Queen (Manu)</strong>
-                <span className="text-[11px] text-slate-500 font-mono">May 15, 2025 - 05:30 PM</span>
+            {trips.slice(0, 2).map((t) => (
+              <div key={t.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                <div>
+                  <strong className="text-slate-900 font-bold block">{t.boatName || 'Sea Queen'}</strong>
+                  <span className="text-[11px] text-slate-500 font-mono">{t.expectedReturn || 'May 15, 2025 - 05:30 PM'}</span>
+                </div>
+                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 font-bold rounded-md text-[10px]">{t.status || 'On Trip'}</span>
               </div>
-              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 font-bold rounded-md text-[10px]">On Trip</span>
-            </div>
-
-            <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
-              <div>
-                <strong className="text-slate-900 font-bold block">Blue Wave (Ramesh)</strong>
-                <span className="text-[11px] text-slate-500 font-mono">May 15, 2025 - 07:00 PM</span>
-              </div>
-              <span className="px-2 py-0.5 bg-blue-50 text-blue-600 font-bold rounded-md text-[10px]">Safe</span>
-            </div>
+            ))}
           </div>
 
           <Link to="/family/history" className="text-xs font-bold text-blue-600 hover:underline block text-center pt-1">View Trips →</Link>

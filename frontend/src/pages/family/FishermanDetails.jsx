@@ -1,14 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserCheck, Phone, Home, Calendar, Briefcase, HeartHandshake, Ship, FileText, Activity, ShieldCheck, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { Link, useParams } from 'react-router-dom';
+import Loader from '../../components/Loader';
+import { familyService } from '../../services/familyService';
 
 export default function FishermanDetails() {
-  const { user } = useAuth();
+  const { id } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [fisherman, setFisherman] = useState(null);
   const [activeTab, setActiveTab] = useState('boat');
 
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await familyService.getFishermanDetails(id);
+        if (res.fisherman) {
+          setFisherman(res.fisherman);
+        }
+      } catch (err) {
+        console.error('Failed to load fisherman details:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [id]);
+
+  if (loading) {
+    return <Loader text="Fetching Linked Fisherman Profile..." />;
+  }
+
+  const f = fisherman || {
+    name: 'Manu',
+    vessel: 'Sea Queen',
+    boatRegNumber: 'TN 07 MF 4587',
+    boatType: 'Mechanized',
+    length: '32 ft',
+    enginePower: '200 HP',
+    insuranceValidity: '03 Dec 2025',
+    phone: '+91 98765 43210',
+    home: 'Rameswaram, Tamil Nadu',
+    age: '34 Years',
+    experience: '12 Years',
+    emergencyContact: '+91 98765 12345 (Wife)',
+    status: 'On Trip'
+  };
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto font-sans">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link to="/family" className="p-2 bg-slate-100 rounded-lg text-slate-600 hover:text-slate-900">
@@ -21,16 +60,16 @@ export default function FishermanDetails() {
       <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-slate-100 pb-5">
           <div className="w-20 h-20 rounded-full bg-blue-100 text-blue-600 border-2 border-blue-500 font-black text-2xl flex items-center justify-center shrink-0">
-            M
+            {f.name.charAt(0)}
           </div>
           <div className="text-center sm:text-left space-y-1">
             <div className="flex items-center justify-center sm:justify-start gap-2">
-              <h2 className="text-xl font-black text-slate-900">Manu</h2>
+              <h2 className="text-xl font-black text-slate-900">{f.name}</h2>
               <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-extrabold rounded-full border border-emerald-300">
-                ● On Trip
+                ● {f.status}
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-semibold">Sea Queen — <span className="font-mono text-slate-700">TN 07 MF 4587</span></p>
+            <p className="text-xs text-slate-500 font-semibold">{f.vessel} — <span className="font-mono text-slate-700">{f.boatRegNumber}</span></p>
           </div>
         </div>
 
@@ -38,27 +77,27 @@ export default function FishermanDetails() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <div className="flex justify-between items-center py-2 border-b border-slate-100">
             <span className="text-slate-400 font-semibold flex items-center gap-2"><Phone size={14} /> Mobile</span>
-            <strong className="text-slate-900 font-mono">+91 98765 43210</strong>
+            <strong className="text-slate-900 font-mono">{f.phone}</strong>
           </div>
 
           <div className="flex justify-between items-center py-2 border-b border-slate-100">
             <span className="text-slate-400 font-semibold flex items-center gap-2"><Home size={14} /> Home</span>
-            <strong className="text-slate-900">Rameswaram, Tamil Nadu</strong>
+            <strong className="text-slate-900">{f.home}</strong>
           </div>
 
           <div className="flex justify-between items-center py-2 border-b border-slate-100">
             <span className="text-slate-400 font-semibold flex items-center gap-2"><Calendar size={14} /> Age</span>
-            <strong className="text-slate-900">34 Years</strong>
+            <strong className="text-slate-900">{f.age}</strong>
           </div>
 
           <div className="flex justify-between items-center py-2 border-b border-slate-100">
             <span className="text-slate-400 font-semibold flex items-center gap-2"><Briefcase size={14} /> Experience</span>
-            <strong className="text-slate-900">12 Years</strong>
+            <strong className="text-slate-900">{f.experience}</strong>
           </div>
 
           <div className="col-span-1 sm:col-span-2 flex justify-between items-center py-2 border-b border-slate-100">
             <span className="text-slate-400 font-semibold flex items-center gap-2"><HeartHandshake size={14} /> Emergency Contact</span>
-            <strong className="text-slate-900 font-mono">+91 98765 12345 (Wife)</strong>
+            <strong className="text-slate-900 font-mono">{f.emergencyContact}</strong>
           </div>
         </div>
 
@@ -82,32 +121,32 @@ export default function FishermanDetails() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs pt-2">
             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
               <span className="text-slate-400 font-semibold block mb-0.5">Boat Name</span>
-              <strong className="text-slate-900 font-bold">Sea Queen</strong>
+              <strong className="text-slate-900 font-bold">{f.vessel}</strong>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
               <span className="text-slate-400 font-semibold block mb-0.5">Registration No.</span>
-              <strong className="text-slate-900 font-mono font-bold">TN 07 MF 4587</strong>
+              <strong className="text-slate-900 font-mono font-bold">{f.boatRegNumber}</strong>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
               <span className="text-slate-400 font-semibold block mb-0.5">Boat Type</span>
-              <strong className="text-slate-900 font-bold">Mechanized</strong>
+              <strong className="text-slate-900 font-bold">{f.boatType}</strong>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
               <span className="text-slate-400 font-semibold block mb-0.5">Length</span>
-              <strong className="text-slate-900 font-bold">32 ft</strong>
+              <strong className="text-slate-900 font-bold">{f.length}</strong>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
               <span className="text-slate-400 font-semibold block mb-0.5">Engine Power</span>
-              <strong className="text-slate-900 font-bold">200 HP</strong>
+              <strong className="text-slate-900 font-bold">{f.enginePower}</strong>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
               <span className="text-slate-400 font-semibold block mb-0.5">Insurance Validity</span>
-              <strong className="text-slate-900 font-bold font-mono">03 Dec 2025</strong>
+              <strong className="text-slate-900 font-bold font-mono">{f.insuranceValidity}</strong>
             </div>
           </div>
         )}
