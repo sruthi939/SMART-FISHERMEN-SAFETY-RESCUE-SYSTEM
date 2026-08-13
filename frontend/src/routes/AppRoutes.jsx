@@ -7,8 +7,12 @@ import PortalSelection from '../pages/PortalSelection';
 // Auth Pages
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
+import FishermanRegistration from '../pages/auth/FishermanRegistration';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 import OTPVerification from '../pages/auth/OTPVerification';
+
+// Protected Route Guard
+import ProtectedRoute from '../components/ProtectedRoute';
 
 // Layouts
 import FishermanLayout from '../layouts/FishermanLayout';
@@ -63,12 +67,20 @@ export default function AppRoutes() {
 
       {/* Auth Routes */}
       <Route path="/auth/login" element={<Login />} />
-      <Route path="/auth/register" element={<Register />} />
+      <Route path="/auth/register" element={<FishermanRegistration />} />
+      <Route path="/auth/register-role" element={<Register />} />
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/otp" element={<OTPVerification />} />
 
-      {/* Fisherman Portal Routes */}
-      <Route path="/fisherman" element={<FishermanLayout />}>
+      {/* Fisherman Portal Routes - Guarded */}
+      <Route
+        path="/fisherman"
+        element={
+          <ProtectedRoute allowedRole="fisherman">
+            <FishermanLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<FishermanDashboard />} />
         <Route path="profile" element={<FishermanProfile />} />
         <Route path="boat" element={<FishermanBoat />} />
@@ -85,8 +97,15 @@ export default function AppRoutes() {
         <Route path="settings" element={<FishermanSettings />} />
       </Route>
 
-      {/* Family Portal Routes */}
-      <Route path="/family" element={<FamilyLayout />}>
+      {/* Family Portal Routes - Guarded */}
+      <Route
+        path="/family"
+        element={
+          <ProtectedRoute allowedRole="family">
+            <FamilyLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<FamilyDashboard />} />
         <Route path="profile" element={<FamilyProfile />} />
         <Route path="fisherman" element={<FamilyMyFisherman />} />
@@ -98,8 +117,15 @@ export default function AppRoutes() {
         <Route path="emergency" element={<FamilyEmergency />} />
       </Route>
 
-      {/* Rescue Portal Routes */}
-      <Route path="/rescue" element={<RescueLayout />}>
+      {/* Rescue Portal Routes - Guarded */}
+      <Route
+        path="/rescue"
+        element={
+          <ProtectedRoute allowedRole="rescue">
+            <RescueLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<RescueDashboard />} />
         <Route path="emergencies" element={<RescueActiveEmergencies />} />
         <Route path="emergencies/:id" element={<RescueEmergencyDetails />} />

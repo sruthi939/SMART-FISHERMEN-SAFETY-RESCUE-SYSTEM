@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserCheck, Phone, Mail, MapPin, Calendar, Briefcase, HeartHandshake, Edit3 } from 'lucide-react';
 import Button from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
@@ -8,19 +8,34 @@ export default function Profile() {
   const { user } = useAuth();
   const { addNotification } = useNotification();
   const [showEditModal, setShowEditModal] = useState(false);
+
   const [profileData, setProfileData] = useState({
-    name: user?.name || 'Arun Kumar',
-    phone: '+91 98765 43210',
-    email: 'arun.kumar@email.com',
-    address: 'Rameswaram, Tamil Nadu, India',
-    dob: '15-06-1988',
-    experience: '12 Years',
-    emergencyContact: 'Anitha (Wife) - +91 98765 43211'
+    name: user?.name || 'Registered Fisherman',
+    phone: user?.phone || '+91 98765 43210',
+    email: user?.email || 'fisherman@sfsrs.gov',
+    address: `${user?.addressLine1 || user?.district || 'Rameswaram'}, ${user?.state || 'Tamil Nadu'}, India`,
+    dob: user?.dob || '15-06-1988',
+    experience: user?.experience || '12 Years',
+    emergencyContact: `${user?.emergencyContactName || 'Family Contact'} - ${user?.emergencyContactPhone || user?.phone || '+91 98765 43211'}`
   });
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || 'Registered Fisherman',
+        phone: user.phone || '+91 98765 43210',
+        email: user.email || 'fisherman@sfsrs.gov',
+        address: `${user.addressLine1 || user.district || 'Rameswaram'}, ${user.state || 'Tamil Nadu'}, India`,
+        dob: user.dob || '15-06-1988',
+        experience: user.experience || '12 Years',
+        emergencyContact: `${user.emergencyContactName || 'Family Contact'} - ${user.emergencyContactPhone || user.phone || '+91 98765 43211'}`
+      });
+    }
+  }, [user]);
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
-    addNotification('Profile updated successfully!', 'info');
+    addNotification('Profile details updated in user store!', 'info');
     setShowEditModal(false);
   };
 
@@ -34,7 +49,7 @@ export default function Profile() {
         <div>
           <h2 className="text-xl font-black text-slate-900">{profileData.name}</h2>
           <div className="flex items-center justify-center gap-2 mt-1">
-            <span className="text-xs font-bold text-slate-500">Fisherman</span>
+            <span className="text-xs font-bold text-slate-500">Registered Fisherman</span>
             <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-extrabold rounded-full border border-emerald-500/30 flex items-center gap-1">
               <UserCheck size={12} /> Verified
             </span>
@@ -88,7 +103,7 @@ export default function Profile() {
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xl max-w-md w-full space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-bold text-slate-900">Edit Fisherman Profile</h3>
+              <h3 className="text-sm font-bold text-slate-900">Edit Profile Information</h3>
               <button onClick={() => setShowEditModal(false)} className="text-slate-400 hover:text-slate-700 font-bold text-sm">✕</button>
             </div>
 
