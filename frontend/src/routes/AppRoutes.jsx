@@ -38,12 +38,16 @@ import FishermanMessages from '../pages/fisherman/Messages';
 // Family Pages
 import FamilyDashboard from '../pages/family/Dashboard';
 import FamilyProfile from '../pages/family/Profile';
-import FamilyMyFisherman from '../pages/family/MyFisherman';
 import FamilyFishermanDetails from '../pages/family/FishermanDetails';
 import FamilyLiveLocation from '../pages/family/LiveLocation';
-import FamilyTripStatus from '../pages/family/TripStatus';
 import FamilyTripHistory from '../pages/family/TripHistory';
 import FamilyAlerts from '../pages/family/Alerts';
+import FamilyMessages from '../pages/family/Messages';
+import FamilyLocationHistory from '../pages/family/LocationHistory';
+import FamilyMembers from '../pages/family/FamilyMembers';
+import FamilyDocuments from '../pages/family/Documents';
+import FamilySettings from '../pages/family/Settings';
+import FamilyHelpSupport from '../pages/family/HelpSupport';
 import FamilyEmergency from '../pages/family/Emergency';
 
 // Rescue Pages
@@ -108,12 +112,17 @@ export default function AppRoutes() {
       >
         <Route index element={<FamilyDashboard />} />
         <Route path="profile" element={<FamilyProfile />} />
-        <Route path="fisherman" element={<FamilyMyFisherman />} />
+        <Route path="fisherman" element={<FamilyFishermanDetails />} />
         <Route path="fisherman/:id" element={<FamilyFishermanDetails />} />
         <Route path="location" element={<FamilyLiveLocation />} />
-        <Route path="status" element={<FamilyTripStatus />} />
         <Route path="history" element={<FamilyTripHistory />} />
         <Route path="alerts" element={<FamilyAlerts />} />
+        <Route path="messages" element={<FamilyMessages />} />
+        <Route path="location-history" element={<FamilyLocationHistory />} />
+        <Route path="documents" element={<FamilyDocuments />} />
+        <Route path="members" element={<FamilyMembers />} />
+        <Route path="settings" element={<FamilySettings />} />
+        <Route path="help" element={<FamilyHelpSupport />} />
         <Route path="emergency" element={<FamilyEmergency />} />
       </Route>
 
