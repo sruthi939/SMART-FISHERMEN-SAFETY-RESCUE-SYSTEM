@@ -2,14 +2,51 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Ship, ShieldCheck, AlertTriangle, CloudSun, PhoneCall, MapPin, ArrowRight, Radio, Wind, Waves, Clock, CheckCircle2 } from 'lucide-react';
 import Map from '../../components/Map';
+import Loader from '../../components/Loader';
 import { useAuth } from '../../hooks/useAuth';
+import { familyService } from '../../services/familyService';
+import { alertService } from '../../services/alertService';
 
 export default function FamilyDashboard() {
   const { user } = useAuth();
   const userName = user?.name || 'Anitha';
 
+  const [loading, setLoading] = useState(true);
+  const [linkedFishermen, setLinkedFishermen] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [fishRes, alertRes] = await Promise.all([
+          familyService.getLinkedFishermen().catch(() => ({ linkedFishermen: [] })),
+          alertService.getAlerts().catch(() => ({ alerts: [] }))
+        ]);
+
+        if (fishRes.linkedFishermen) {
+          setLinkedFishermen(fishRes.linkedFishermen);
+        }
+        if (alertRes.alerts) {
+          setAlerts(alertRes.alerts);
+        }
+      } catch (err) {
+        console.error('Failed to load family dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return <Loader text="Loading Family Safety Telemetry..." />;
+  }
+
+  const activeCount = linkedFishermen.filter(f => f.status === 'On Trip').length;
+  const safeCount = linkedFishermen.filter(f => f.status === 'Returned' || f.status === 'Safe').length;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Top Greeting Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -26,7 +63,7 @@ export default function FamilyDashboard() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-400 block">Fishermen</span>
-            <strong className="text-xl font-black text-slate-900 font-mono">02</strong>
+            <strong className="text-xl font-black text-slate-900 font-mono">0{linkedFishermen.length || 2}</strong>
           </div>
         </div>
 
@@ -36,7 +73,7 @@ export default function FamilyDashboard() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-400 block">On Trip</span>
-            <strong className="text-xl font-black text-slate-900 font-mono">01</strong>
+            <strong className="text-xl font-black text-slate-900 font-mono">0{activeCount || 1}</strong>
           </div>
         </div>
 
@@ -46,7 +83,7 @@ export default function FamilyDashboard() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-400 block">Safe</span>
-            <strong className="text-xl font-black text-slate-900 font-mono">01</strong>
+            <strong className="text-xl font-black text-slate-900 font-mono">0{safeCount || 1}</strong>
           </div>
         </div>
 
@@ -72,31 +109,22 @@ export default function FamilyDashboard() {
             <Link to="/family/location" className="text-xs font-bold text-blue-600 hover:underline">View All</Link>
           </div>
 
-          <Map title="Palk Bay Live Vessel Tracker (Sea Queen & Blue Wave)" />
+          <Map title="Palk Bay Live Vessel Tracker (Linked Fishermen)" />
 
           {/* Active Vessels Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-            <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-                <div>
-                  <strong className="text-slate-900 font-bold block">Manu</strong>
-                  <span className="text-[11px] text-slate-500">Sea Queen • <span className="text-emerald-600 font-bold">On Trip</span></span>
+            {linkedFishermen.map((fish) => (
+              <div key={fish.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-2.5 h-2.5 rounded-full ${fish.status === 'On Trip' ? 'bg-emerald-500 animate-ping' : 'bg-blue-500'}`}></span>
+                  <div>
+                    <strong className="text-slate-900 font-bold block">{fish.name}</strong>
+                    <span className="text-[11px] text-slate-500">{fish.vessel} • <span className={fish.status === 'On Trip' ? 'text-emerald-600 font-bold' : 'text-blue-600 font-bold'}>{fish.status}</span></span>
+                  </div>
                 </div>
+                <Link to="/family/location" className="px-2.5 py-1 bg-blue-600 text-white font-bold rounded-lg text-[10px]">Track</Link>
               </div>
-              <Link to="/family/location" className="px-2.5 py-1 bg-blue-600 text-white font-bold rounded-lg text-[10px]">Track</Link>
-            </div>
-
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                <div>
-                  <strong className="text-slate-900 font-bold block">Ramesh</strong>
-                  <span className="text-[11px] text-slate-500">Blue Wave • <span className="text-blue-600 font-bold">Returned</span></span>
-                </div>
-              </div>
-              <Link to="/family/fisherman" className="px-2.5 py-1 bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px]">Details</Link>
-            </div>
+            ))}
           </div>
         </div>
 

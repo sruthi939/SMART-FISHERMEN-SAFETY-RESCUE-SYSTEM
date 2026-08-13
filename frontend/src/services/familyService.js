@@ -1,7 +1,8 @@
 import { apiRequest } from './api';
 
 export const familyService = {
-  getAll: () => apiRequest('/families'),
-  getById: (id) => apiRequest(`/families/${id}`),
-  getMyFisherman: () => apiRequest('/family/my-fisherman'),
+  getAll: () => apiRequest('/family/fishermen'),
+  getLinkedFishermen: () => apiRequest('/family/fishermen'),
+  getFishermanDetails: (id) => apiRequest(`/family/fisherman/${id || 'FSH001'}`),
+  linkFisherman: (data) => apiRequest('/family/link-fisherman', { method: 'POST', body: JSON.stringify(data) }),
 };
