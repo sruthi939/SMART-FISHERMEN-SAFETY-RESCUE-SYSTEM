@@ -31,5 +31,25 @@ export const authService = {
 
   getCurrentUser: async () => {
     return apiRequest('/auth/me');
+  },
+
+  getPendingUsers: async () => {
+    return apiRequest('/admin/pending-users');
+  },
+
+  getAllUsers: async () => {
+    return apiRequest('/admin/users');
+  },
+
+  approveUser: async (userId) => {
+    return apiRequest(`/admin/approve-user/${userId}`, {
+      method: 'PUT'
+    });
+  },
+
+  rejectUser: async (userId) => {
+    return apiRequest(`/admin/reject-user/${userId}`, {
+      method: 'PUT'
+    });
   }
 };

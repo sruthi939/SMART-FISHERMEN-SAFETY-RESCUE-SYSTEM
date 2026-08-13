@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import EmergencyCard from '../../components/EmergencyCard';
-import Loader from '../../components/Loader';
-import { emergencyService } from '../../services/emergencyService';
-import { useNotification } from '../../hooks/useNotification';
+import EmergencyCard from '../components/EmergencyCard';
+import Loader from '../components/Loader';
+import { emergencyService } from '../services/emergencyService';
+import { useNotification } from '../hooks/useNotification';
 
 export default function Emergencies() {
   const [emergencies, setEmergencies] = useState([]);
@@ -40,7 +40,7 @@ export default function Emergencies() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-extrabold text-white">Active Emergency Distress Log</h1>
-        <button onClick={fetchEmergencies} className="text-xs bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 hover:text-cyan-400">
+        <button onClick={fetchEmergencies} className="text-xs bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 hover:text-purple-400">
           Refresh Live Feed
         </button>
       </div>

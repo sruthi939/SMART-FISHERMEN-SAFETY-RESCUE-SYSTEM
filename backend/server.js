@@ -18,6 +18,7 @@ const locationRoute = require('./routes/locationRoute');
 const tripRoute = require('./routes/tripRoute');
 const alertRoute = require('./routes/alertRoute');
 const reportRoute = require('./routes/reportRoute');
+const documentRoute = require('./routes/documentRoute');
 
 const app = express();
 const server = http.createServer(app);
@@ -48,6 +49,7 @@ app.use('/api/locations', locationRoute);
 app.use('/api/trips', tripRoute);
 app.use('/api/alerts', alertRoute);
 app.use('/api/reports', reportRoute);
+app.use('/api/documents', documentRoute);
 
 // Health Check Route
 app.get('/api/health', (req, res) => {

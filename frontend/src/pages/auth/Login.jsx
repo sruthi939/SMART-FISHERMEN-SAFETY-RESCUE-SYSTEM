@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Anchor, ArrowRight, Loader2 } from 'lucide-react';
+import { Anchor, ArrowRight, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
@@ -11,6 +11,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pendingApprovalMsg, setPendingApprovalMsg] = useState(null);
   const { login } = useAuth();
   const { addNotification } = useNotification();
   const navigate = useNavigate();
@@ -18,18 +19,24 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setPendingApprovalMsg(null);
 
     try {
       const res = await authService.login({ email, password });
-      const user = res.user || { name: email.split('@')[0], email, role: 'fisherman' };
-      const token = res.token || 'sample_token';
+      const user = res.user;
+      const token = res.token || 'jwt_sample_token';
       
       login(user, token);
       addNotification(`Welcome back, ${user.name}!`, 'info');
       navigate(`/${user.role || 'fisherman'}`);
     } catch (err) {
       console.error('Login error:', err);
-      addNotification(err.message || 'Login failed. Please try again.', 'error');
+      if (err.message && err.message.includes('pending Government Admin')) {
+        setPendingApprovalMsg(err.message);
+        addNotification('Account Pending Admin Verification', 'warning');
+      } else {
+        addNotification(err.message || 'Login failed. Please verify credentials.', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -46,6 +53,16 @@ export default function Login() {
           <p className="text-xs text-slate-400 mt-1">Sign in to access your portal</p>
         </div>
 
+        {pendingApprovalMsg && (
+          <div className="mb-5 p-4 rounded-xl bg-amber-950/40 border border-amber-500/50 text-amber-200 text-xs flex items-start gap-3 animate-in fade-in">
+            <Clock size={20} className="shrink-0 text-amber-400 mt-0.5" />
+            <div>
+              <span className="font-bold block text-amber-300 mb-0.5">Admin Approval Pending</span>
+              <p className="leading-relaxed opacity-90">{pendingApprovalMsg}</p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input label="Email Address" type="email" placeholder="captain@sfsrs.gov" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
@@ -58,7 +75,7 @@ export default function Login() {
             {loading ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                <span>Signing In...</span>
+                <span>Verifying Credentials...</span>
               </>
             ) : (
               <>

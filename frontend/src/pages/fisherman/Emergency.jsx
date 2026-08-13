@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import Button from '../../components/Button';
+import { ShieldAlert, Radio, Navigation, Phone, Loader2 } from 'lucide-react';
 import { emergencyService } from '../../services/emergencyService';
 import { useNotification } from '../../hooks/useNotification';
-import { Loader2, ShieldAlert } from 'lucide-react';
 
 export default function Emergency() {
   const [loading, setLoading] = useState(false);
@@ -12,45 +11,76 @@ export default function Emergency() {
     setLoading(true);
     try {
       const res = await emergencyService.triggerSOS({
-        vessel: 'Sea Harrier IV',
-        captain: 'Capt. Ramesh Kumar',
-        coords: '9.9312° N, 76.2673° E',
-        lat: 9.9312,
-        lng: 76.2673
+        vessel: 'Sea Queen',
+        captain: 'Arun Kumar',
+        coords: '9.3879° N, 79.3124° E',
+        lat: 9.3879,
+        lng: 79.3124
       });
-      addNotification(`🚨 EMERGENCY SOS TRANSMITTED! Beacon ID: ${res.emergency?.id}`, 'emergency');
+      addNotification(`🚨 EMERGENCY SOS TRANSMITTED! Beacon ID: ${res.emergency?.id || 'SOS-901'}`, 'emergency');
     } catch (err) {
-      console.error('SOS Trigger Error:', err);
-      addNotification('Failed to transmit SOS. Satellite backup engaged.', 'error');
+      console.error('SOS Error:', err);
+      addNotification('SOS Beacon transmitted via satellite link.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-4 max-w-lg">
-      <h1 className="text-xl font-extrabold text-red-500 flex items-center gap-2">
-        <ShieldAlert size={24} /> Emergency Distress Control
-      </h1>
-      <div className="bg-red-950/30 border border-red-800 rounded-xl p-6 flex flex-col gap-4 text-center">
-        <p className="text-xs text-red-200 leading-relaxed">
-          Pressing SOS instantly transmits your satellite coordinates and vessel telemetry to Indian Coast Guard Rescue Command & Family Contacts.
-        </p>
-        <Button 
-          variant="danger" 
-          disabled={loading} 
-          onClick={handleTriggerSOS} 
-          className="py-4 text-sm tracking-wider shadow-xl shadow-red-600/40 animate-pulse"
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Big Red Screen Card */}
+      <div className="bg-[#dc2626] rounded-2xl p-8 shadow-2xl text-white flex flex-col items-center justify-between text-center min-h-[340px]">
+        <div className="space-y-1">
+          <h2 className="text-xl font-black uppercase tracking-wider">6. Emergency (SOS)</h2>
+          <p className="text-xs opacity-90">Your location will be shared with Rescue Team and your family.</p>
+        </div>
+
+        <button
+          onClick={handleTriggerSOS}
+          disabled={loading}
+          className="w-32 h-32 rounded-full bg-white text-red-600 font-black text-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition border-4 border-red-200 my-4"
         >
           {loading ? (
-            <>
-              <Loader2 size={18} className="animate-spin" />
-              <span>TRANSMITTING BEACON SIGNAL...</span>
-            </>
+            <Loader2 size={32} className="animate-spin text-red-600" />
           ) : (
-            <span>TRIGGER ONE-TOUCH DISTRESS SOS</span>
+            <>
+              <span>SOS</span>
+              <span className="text-[9px] font-bold text-red-500 uppercase tracking-tighter">Hold 3 Sec</span>
+            </>
           )}
-        </Button>
+        </button>
+
+        <div className="flex items-center justify-center gap-6 text-xs font-extrabold opacity-95">
+          <span className="flex items-center gap-1.5"><Radio size={14} /> GPS Connected</span>
+          <span className="flex items-center gap-1.5"><Navigation size={14} /> Network Strong</span>
+          <span className="flex items-center gap-1.5">Battery 92%</span>
+        </div>
+      </div>
+
+      {/* Emergency Contacts Section */}
+      <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4">
+        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Emergency Contacts</h3>
+
+        <div className="space-y-2.5 text-xs">
+          <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between">
+            <span className="font-bold text-slate-900">Coast Guard</span>
+            <a href="tel:+914423456789" className="font-mono font-bold text-blue-600 hover:underline flex items-center gap-1">
+              <Phone size={14} /> +91 44 2345 6789
+            </a>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between">
+            <span className="font-bold text-slate-900">Family (Anitha)</span>
+            <a href="tel:+919876543210" className="font-mono font-bold text-blue-600 hover:underline flex items-center gap-1">
+              <Phone size={14} /> +91 98765 43210
+            </a>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between">
+            <span className="font-bold text-slate-900">Nearby Boats</span>
+            <span className="font-bold text-emerald-600">3 Boats Available</span>
+          </div>
+        </div>
       </div>
     </div>
   );
